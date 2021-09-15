@@ -25,7 +25,9 @@ class Tablero {
         return (this.cantPiezasBlancas === 0 ? GANAN_NEGRAS : (this.cantPiezasNegras === 0 ? GANAN_BLANCAS : JUEGO_INCONCLUSO))
     }
     serializarTablero(){ //Convierte todo el tablero a un string
-        return this.table.reduce((prev, curr)=>(`${prev}${curr}`),'');
+        return this.table.reduce((textSerialFinal, fila)=>(`${textSerialFinal}${
+            fila.reduce( (textTotalColumna, valorMat) => `${textTotalColumna}${valorMat}`, '' )
+        }`),'');
     }
     dibujarTablero(){
         for (let i = 0; i < this.table.length; i++) {
@@ -52,36 +54,83 @@ class Tablero {
      * realizar dada una posición específica y un tipo de jugador.
      * @param {*} ficha 
      * @param {*} jugador 
-     * @param {*} esDama 
      * @returns 
      */
-    getMovimientos(ficha, jugador, esDama = false) { //ficha = [fila, columna] - jugador = 1 | 2
+    getMovimientosPosibles(ficha, jugador){
+        const [fila, columna] = ficha;
+        const esDama = this.table[fila][columna] >= 5;
+        let movimientos = []
+        if(esDama){
+            const direccionesValidas = new Array(4).fill(true);
+            const esValido = (posicion, direccion) => {
+                if( !this.getEstaEnTablero(posicion) ){
+                    return false;
+                }
+                const hayAliado = this.getHayAliadoEnPosicion( jugador, posicion);
+                const hayEnemigo = this.getHayEnemigoEnPosicion( jugador, posicion);
+                if(hayAliado){
+                    direccionesValidas[direccion] = false;
+                }else if(hayEnemigo){
+                    direccionesValidas[direccion] = false;
+                    return true;
+                }
+                return direccionesValidas[direccion];
+            }
+            for (let i = 0; i < this.table.length; i++) {
+                const movimientosPosiblesDama = [
+                    [fila + (i + 1), columna + (i + 1)],
+                    [fila + (i + 1), columna - (i + 1)],
+                    [fila - (i + 1), columna + (i + 1)],
+                    [fila - (i + 1), columna - (i + 1)],
+                ];
+                for (let j = 0; j < movimientosPosiblesDama.length; j++) {
+                    if(esValido(movimientosPosiblesDama[j], j )) 
+                        movimientos.push( movimientosPosiblesDama[j] );
+                }
+            }
+        }else{
+            const desplazamiento = jugador === 2 ? -1 : 1;
+            movimientos = [
+                [fila + desplazamiento, columna + 1],
+                [fila + desplazamiento, columna - 1],
+            ];
+        }   
+        return movimientos;
+    }
+    getEstaEnTablero( [fila, columna] ){
+        return( fila >= 0 && columna>= 0 && fila < this.table.length && columna < this.table[0].length );
+    }
+    removerMovimientosDuplicados(movimientosValidos){
+        const hashMovimientosValidos = movimientosValidos.reduce( (prev, curr) => {
+            const [fila, columna] = curr.movimiento;
+            const hashIndex = fila+''+columna;
+            return {
+                ...prev,
+                [hashIndex]: {
+                    ...curr,
+                    puedeCapturar: (prev[hashIndex] || {}).puedeCapturar || curr.puedeCapturar
+                }
+            };
+        }, {} ); 
+        return Object.values(hashMovimientosValidos);
+    }
+    getMovimientos(ficha, jugador) { //ficha = [fila, columna] - jugador = 1 | 2
         // TODO: MOVIMIENTOS POSIBLES DE UN PEON, DE UNA DAMA, DEL BLANCO, DEL NEGRO
         // TODO: VALIDAR QUE EL MOVIMIENTO ESTÉ DENTRO DEL TABLERO
-        const [fila, columna] = ficha;
-
-        const movimientosPosibles = [
-            [fila + 1, columna + 1],
-            [fila + 1, columna - 1],
-            [fila - 1, columna + 1],
-            [fila - 1, columna - 1],
-        ];
+        const movimientosPosibles = this.getMovimientosPosibles(ficha, jugador);
         const movimientosValidos = [];
-
-        for (let movimiento of movimientosPosibles) {
-            let esValido = !this.getHayAliadoEnPosicion(jugador, movimiento);
+        for (const movimiento of movimientosPosibles) {
+            const esValido = this.getEstaEnTablero(movimiento) && !this.getHayAliadoEnPosicion(jugador, movimiento);
             if (!esValido) continue;
             
-            let puedeCapturar = this.getEsMovimientoDeCatura(ficha, jugador, movimiento);
-            let esEspacioVacio = this.getEsVacio(movimiento);
-            if (puedeCapturar || esEspacioVacio) {
-                movimientosValidos.push({
-                    movimiento,
-                    puedeCapturar
-                })
+            const puedeCapturar = this.getEsMovimientoDeCaptura(ficha, jugador, movimiento);
+            const esEspacioVacio = this.getEsVacio(movimiento);
+            if (puedeCapturar || esEspacioVacio) { //TODO: CAMBIAR 
+                const posicionesSiguientes = puedeCapturar ? this.getPosicionesPostCaptura(ficha, movimiento) : [movimiento];
+                movimientosValidos.push( ...posicionesSiguientes.map( movimiento => ({movimiento, puedeCapturar }) ) );
             }
         }
-        return movimientosValidos;
+        return this.removerMovimientosDuplicados(movimientosValidos);
     }
     /**
      * Determina si, dada una posición inicial y una posición siguiente,
@@ -93,19 +142,47 @@ class Tablero {
      * @param {*} movimiento es la posición siguiente
      * @returns si es posible capturar una la ficha enemiga
      */
-    getEsMovimientoDeCatura(ficha, jugador, movimiento) {
+    getEsMovimientoDeCaptura(ficha, jugador, movimiento) {
         // VERIFICAR QUE HAYA UN ENEMIGO EN LA POSICIÓN DADA POR "movimiento"
         // SI HAY UN ENEMIGO Y LA POSICIÓN POSTERIOR A LA CAPTURA ES UN ESPACIO VACÍO, RETORNAR TRUE
         const [movFila, movColumna] = movimiento;
         const [fila, columna] = ficha;
-
         const hayEnemigo = this.getHayEnemigoEnPosicion(jugador, movimiento);
         if (hayEnemigo) {
             const [varFila, varColumna] = [movFila - fila, movColumna - columna];
-            const posicionPostCaptura = [movFila + varFila, movColumna + varColumna];
-            return this.getEsVacio(posicionPostCaptura);
+            const [unitVarFila, unitVarColumna] = [ varFila/Math.abs(varFila), varColumna/Math.abs(varColumna) ];
+            let posicionActual = [ fila + unitVarFila, columna + unitVarColumna ];
+            while( this.getEstaEnTablero( posicionActual ) ){
+                if( posicionActual[0] === movimiento[0] && posicionActual[1] === movimiento[1] ){
+                    break;
+                }
+                if( ! this.getEsVacio(posicionActual) ){
+                    return false;
+                }
+                const [filaAnterior, columnaAnterior] = posicionActual;
+                posicionActual = [filaAnterior + unitVarFila, columnaAnterior + unitVarColumna];
+            }
+            const posicionPostCaptura = [movFila + unitVarFila, movColumna + unitVarColumna];
+            return this.getEstaEnTablero(posicionPostCaptura) && this.getEsVacio(posicionPostCaptura);
         }
         return false;
+    }
+    getPosicionesPostCaptura(ficha, movimiento){
+        const [movFila, movColumna] = movimiento;
+        const [fila, columna] = ficha;
+        const [varFila, varColumna] = [movFila - fila, movColumna - columna];
+        const [unitVarFila, unitVarColumna] = [ varFila/Math.abs(varFila), varColumna/Math.abs(varColumna) ];
+        const esDama = this.table[fila][columna] > 5;
+        const posicionesPostCaptura = [ [movFila + unitVarFila, movColumna + unitVarColumna] ];
+        let posicionActual = [ movFila + 2*unitVarFila, movColumna + 2*unitVarColumna ];
+        if(esDama){
+            while( this.getEstaEnTablero( posicionActual ) && this.getEsVacio(posicionActual) ){
+                posicionesPostCaptura.push(posicionActual);
+                const [filaAnterior, columnaAnterior] = posicionActual;
+                posicionActual = [filaAnterior + unitVarFila, columnaAnterior + unitVarColumna];
+            }
+        }
+        return posicionesPostCaptura;
     }
     /**
      * Dado un jugaror (1 | 2) verifica si la posición dada 

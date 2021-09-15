@@ -1,12 +1,16 @@
 <template>
   <q-page class="flex flex-center column">
+    {{selectedElement}}
     {{movimientosPosibles}}
     <div v-for="(fila, index) of tabla" :key="index" class="row">
       <div v-for="(elem, indexElem) of fila" :key="indexElem">
         <div class="empty-space text-white" :class="(indexElem + index) % 2 ? 'empty-black' : 'empty-red'">
           <q-btn flat v-if="elem === 1 || elem === 2" 
-            @click="select([index, indexElem], elem !== 1)" class="pawn" 
+            @click="select([index, indexElem], elem !== 1, elem)" class="pawn" 
             :class="[elem === 1 ? 'black-pawn' : 'white-pawn', { 'selected': index === selectedElement[0] && indexElem === selectedElement[1] }]" />
+          <q-btn flat v-if="elem === 8 || elem === 9" 
+            @click="select([index, indexElem], elem !== 8)" class="pawn" 
+            :class="[elem === 8 ? 'black-pawn' : 'white-pawn', { 'selected': index === selectedElement[0] && indexElem === selectedElement[1] }]" />
         </div>
       </div>
     </div>
@@ -27,10 +31,10 @@ export default {
     }
   },
   methods: {
-    select(indexElem, canMove) {
-      if (!this.interactive || !canMove) return;
+    select(indexElem, canMove, jugador) {
+      //if (!this.interactive || !canMove) return;
       this.selectedElement = indexElem;
-      this.movimientosPosibles = this.tablero.getMovimientos(indexElem, 2);
+      this.movimientosPosibles = this.tablero.getMovimientos(indexElem, jugador);
     },
   },
   computed: {
