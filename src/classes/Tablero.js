@@ -47,13 +47,96 @@ class Tablero {
         }
         return fichas;
     }
-    getMovimientos(ficha, jugador){ //ficha = { fila: 0, columna: 0} jugador = 1 | 2
-        const movimientos = [];//TODO: MOVIMIENTOS POSIBLES DE UN PEON, DE UNA DAMA, DEL BLANCO, DEL NEGRO
-        if(jugador === 1){
-            if( ficha.fila === 0 ){
-                
+    /**
+     * Obtiene una lista con los todos los posibles movimientos a
+     * realizar dada una posición específica y un tipo de jugador.
+     * @param {*} ficha 
+     * @param {*} jugador 
+     * @param {*} esDama 
+     * @returns 
+     */
+    getMovimientos(ficha, jugador, esDama = false) { //ficha = [fila, columna] - jugador = 1 | 2
+        // TODO: MOVIMIENTOS POSIBLES DE UN PEON, DE UNA DAMA, DEL BLANCO, DEL NEGRO
+        // TODO: VALIDAR QUE EL MOVIMIENTO ESTÉ DENTRO DEL TABLERO
+        const [fila, columna] = ficha;
+
+        const movimientosPosibles = [
+            [fila + 1, columna + 1],
+            [fila + 1, columna - 1],
+            [fila - 1, columna + 1],
+            [fila - 1, columna - 1],
+        ];
+        const movimientosValidos = [];
+
+        for (let movimiento of movimientosPosibles) {
+            let esValido = !this.getHayAliadoEnPosicion(jugador, movimiento);
+            if (!esValido) continue;
+            
+            let puedeCapturar = this.getEsMovimientoDeCatura(ficha, jugador, movimiento);
+            let esEspacioVacio = this.getEsVacio(movimiento);
+            if (puedeCapturar || esEspacioVacio) {
+                movimientosValidos.push({
+                    movimiento,
+                    puedeCapturar
+                })
             }
         }
+        return movimientosValidos;
+    }
+    /**
+     * Determina si, dada una posición inicial y una posición siguiente,
+     * es posible capturar la pieza que se encuentre en la posición siguiente.
+     * Para eso, se verifica que la posición donde debe saltar la pieza dada por
+     * ficha se encuentra despejada.
+     * @param {*} ficha es la posición inicial
+     * @param {*} jugador puede ser 1 o 2
+     * @param {*} movimiento es la posición siguiente
+     * @returns si es posible capturar una la ficha enemiga
+     */
+    getEsMovimientoDeCatura(ficha, jugador, movimiento) {
+        // VERIFICAR QUE HAYA UN ENEMIGO EN LA POSICIÓN DADA POR "movimiento"
+        // SI HAY UN ENEMIGO Y LA POSICIÓN POSTERIOR A LA CAPTURA ES UN ESPACIO VACÍO, RETORNAR TRUE
+        const [movFila, movColumna] = movimiento;
+        const [fila, columna] = ficha;
+
+        const hayEnemigo = this.getHayEnemigoEnPosicion(jugador, movimiento);
+        if (hayEnemigo) {
+            const [varFila, varColumna] = [movFila - fila, movColumna - columna];
+            const posicionPostCaptura = [movFila + varFila, movColumna + varColumna];
+            return this.getEsVacio(posicionPostCaptura);
+        }
+        return false;
+    }
+    /**
+     * Dado un jugaror (1 | 2) verifica si la posición dada 
+     * contiene una pieza del mismo tipo.
+     * @param {*} jugador puede ser 1 o 2
+     * @param {*} posicion es la posición en el tablero a verificar
+     * @returns si la posición dada es del mismo tipo que el jugador
+     */
+    getHayAliadoEnPosicion(jugador, posicion) {
+        const [fila, columna] = posicion;
+        return this.table[fila][columna] === jugador;
+    }
+    /**
+     * Dado un jugaror (1 | 2) verifica si la posición dada 
+     * contiene una pieza del tipo opuesto.
+     * @param {*} jugador puede ser 1 o 2
+     * @param {*} posicion es la posición en el tablero a verificar
+     * @returns si la posición dada es del tipo contrario que el jugador
+     */
+    getHayEnemigoEnPosicion(jugador, posicion) {
+        const [fila, columna] = posicion;
+        return !this.getEsVacio(posicion) && this.table[fila][columna] !== jugador;
+    }
+    /**
+     * Verifica si una posición dada no contiene ninguna pieza
+     * @param {*} posicion es la posición en el tablero a verificar
+     * @returns true si la posición dada no está ocupada por ninguna pieza
+     */
+    getEsVacio(posicion) {
+        const [fila, columna] = posicion;
+        return this.table[fila][columna] === 0;
     }
     jugar(fila, columna, jugador){ //Fila = 0-8, Columna = 0-8, Jugador = 1 | 2
         this.table[fila][columna] = jugador;
