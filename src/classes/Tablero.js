@@ -2,10 +2,28 @@ import {GANAN_BLANCAS, GANAN_NEGRAS, JUEGO_INCONCLUSO} from '../helpers/constant
 import {getInitialTable} from '../helpers';
 class Tablero {
     table = getInitialTable(); //Tablero de damas 
-    cantPeonesBlancos = 12;
-    cantDamasBlancas = 0;
-    cantPeonesNegros = 12;
-    cantDamasNegras = 0;
+    getCantidadDePieza( codPieza ){
+        let cont = 0;
+        for (const fila of this.table) {
+            for( const celda of fila){
+                if(celda === codPieza){ cont++ };
+            }
+        }
+        return cont;
+    }
+    get cantPeonesBlancos(){
+        return this.getCantidadDePieza(2);
+    };
+    get cantDamasBlancas(){
+        return this.getCantidadDePieza(9);
+    };
+    get cantPeonesNegros(){
+        return this.getCantidadDePieza(1);
+    };
+    get cantDamasNegras(){
+        return this.getCantidadDePieza(8);
+    };
+    
     get cantFichasBlancas(){
         return this.cantPeonesBlancos + this.cantDamasBlancas;
     }
@@ -105,14 +123,17 @@ class Tablero {
         }, {} ); 
         return Object.values(hashMovimientosValidos);
     }
-    // getAllMovimientos(jugador){
-    //     const movimientos = [] // [{ ficha, movimiento, haCapturado, capturados:[] }]
-    //     for(const ficha of this.getFichas(jugador)){
-    //         const movimientosFicha = this.getMovimientosByFicha(ficha, jugador);
-    //         movimientos.push(  );
-
-    //     }
-    // }
+    getAllJugadas(jugador){
+        const jugadas = [] // [{ ficha, movimiento, haCapturado, capturados:[] }]
+        for(const ficha of this.getFichas(jugador)){
+            const jugadasFicha = this.getJugadasByFicha(ficha, jugador).map(mov => ({
+                ...mov,
+                ficha
+            }));
+            jugadas.push( ...jugadasFicha );
+        }
+        return jugadas;
+    }
     getJugadasByFicha(ficha, jugador){
         const tableroOriginal = [...this.table.map(movs => [...movs])];
         const movimientosFicha = this.getMovimientosByFicha(ficha, jugador);
@@ -254,8 +275,26 @@ class Tablero {
         const [fila, columna] = posicion;
         return this.table[fila][columna] === 0;
     }
-    jugar(fila, columna, jugador){ //Fila = 0-8, Columna = 0-8, Jugador = 1 | 2
-        this.table[fila][columna] = jugador;
+    coronar(){//Verifica si hay peones en las ultimas lineas y los corona
+        const len = this.table.length;
+        for (let i = 0; i < this.table[0].length; i++) {
+            if( this.table[0][i] === 2 ){ //SI HAY UN PEON BLANCO EN LA PRIMERA FILA -> CORONAR
+                this.table[0][i]+=7;
+            }else if( this.table[len][i] === 1 ){//SI HAY UN PEON NEGRO EN LA ULTIMA FILA -> CORONAR
+                this.table[len][i]+=7;
+            }
+        }
+    }
+    jugar(jugada){ //movimiento: {fila, columna}, haCapturado: boolean, fichasCapturadas:[{fila, columna}]}
+        const {movimiento, haCapturado, fichasCapturadas, ficha} = jugada;
+        const [fichaFila, fichaColumna] = ficha;
+        const [movFila, movColumna] = movimiento;
+        this.table[movFila][movColumna] = this.table[fichaFila][fichaColumna]; // MUEVO LA FICHA ACTUAL A SU POSICION LUEGO DE LA JUGADA
+        this.table[fichaFila][fichaColumna] = 0;//LA POSICION VIEJA DE LA FICHA QUEDA VACIA
+        haCapturado && fichasCapturadas.forEach( ([captFila, captColumna])=> {//TODAS LAS POCISIONES QUE CAPTURA QUEDAN VACIAS
+            this.table[captFila][captColumna] = 0;
+        });
+        this.coronar();
     }
 }
 export default Tablero;
