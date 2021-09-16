@@ -46,13 +46,17 @@ export default {
         if (movimientoPosible.movimiento[0] === posicion[0] && 
             movimientoPosible.movimiento[1] === posicion[1]) {
           this.tablero.jugar({...movimientoPosible, ficha: this.selectedElement});
-          this.handleTurnoDeHumano();
+          this.handleTerminarTurnoDeHumano();
           break;
         }
       }
     },
-    handleTurnoDeHumano() {
+    handleTerminarTurnoDeHumano() {
+      this.interactive = false;
+      this.selectedElement = [];
+      this.movimientosPosibles = [];
       const jugada = this.agenteRl.jugar(1);
+      this.interactive = true;
     }
   },
   computed: {
