@@ -34,7 +34,7 @@ export default {
     select(indexElem, canMove, jugador) {
       //if (!this.interactive || !canMove) return;
       this.selectedElement = indexElem;
-      this.movimientosPosibles = this.tablero.getMovimientos(indexElem, jugador);
+      this.movimientosPosibles = this.tablero.getJugadasByFicha(indexElem, jugador);
     },
   },
   computed: {

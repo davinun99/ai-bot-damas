@@ -1,14 +1,5 @@
 import {GANAN_BLANCAS, GANAN_NEGRAS, JUEGO_INCONCLUSO} from '../helpers/constants';
-const getInitialTable = () => ([ //
-    [1, 0, 1, 0, 1, 0, 1, 0], //1 SON NEGRAS
-    [0, 1, 0, 1, 0, 1, 0, 1], //8 SON DAMAS NEGRAS
-    [1, 0, 1, 0, 1, 0, 1, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0],
-    [2, 0, 2, 0, 2, 0, 2, 0],
-    [0, 2, 0, 2, 0, 2, 0, 2], //2 SON BLANCAS
-    [2, 0, 2, 0, 2, 0, 2, 0], //9 SON DAMAS BLANCAS
-]);
+import {getInitialTable} from '../helpers';
 class Tablero {
     table = getInitialTable(); //Tablero de damas 
     cantPeonesBlancos = 12;
@@ -114,9 +105,49 @@ class Tablero {
         }, {} ); 
         return Object.values(hashMovimientosValidos);
     }
-    getMovimientos(ficha, jugador) { //ficha = [fila, columna] - jugador = 1 | 2
-        // TODO: MOVIMIENTOS POSIBLES DE UN PEON, DE UNA DAMA, DEL BLANCO, DEL NEGRO
-        // TODO: VALIDAR QUE EL MOVIMIENTO ESTÉ DENTRO DEL TABLERO
+    // getAllMovimientos(jugador){
+    //     const movimientos = [] // [{ ficha, movimiento, haCapturado, capturados:[] }]
+    //     for(const ficha of this.getFichas(jugador)){
+    //         const movimientosFicha = this.getMovimientosByFicha(ficha, jugador);
+    //         movimientos.push(  );
+
+    //     }
+    // }
+    getJugadasByFicha(ficha, jugador){
+        const tableroOriginal = [...this.table.map(movs => [...movs])];
+        const movimientosFicha = this.getMovimientosByFicha(ficha, jugador);
+        const movimientos = this.getJugadasByFichaRec(ficha, jugador, movimientosFicha);
+        this.table = tableroOriginal;
+        return movimientos;
+    }
+    getJugadasByFichaRec(ficha, jugador, movimientos){
+        const movimientosFinales = [...movimientos];
+        const [fila, col] = ficha;
+        for (const movimiento of movimientos) {
+            //Si se puede capturar mas fichas, siguen habiendo movimientos posibles
+            if( movimiento.puedeCapturar ){
+                const tableroActual = [...this.table.map(movs => [...movs])];
+                const [movFila, movCol] = movimiento.movimiento;
+                for (let i = 0; i < movimiento.fichasCapturadas.length; i++) {
+                    const [filaCapt, colCapt] = movimiento.fichasCapturadas[i]
+                    this.table[filaCapt][colCapt] = 0;    
+                }
+                this.table[movFila][movCol] = this.table[fila][col];
+                this.table[fila][col] = 0;
+                const sgtesMovimientosConCaptura = this.getMovimientosByFicha(movimiento.movimiento ,jugador).filter(mov=>mov.puedeCapturar);
+                const sgtesJugadas = this.getJugadasByFichaRec( movimiento.movimiento, jugador, sgtesMovimientosConCaptura).map(
+                    jugada => ({...jugada, 
+                        fichasCapturadas: jugada.fichasCapturadas.concat(movimiento.fichasCapturadas)
+                    })
+                );
+                movimientosFinales.push( ...sgtesJugadas );
+                this.table = tableroActual;
+            }
+        }
+        return movimientosFinales;
+    }
+
+    getMovimientosByFicha(ficha, jugador) { //ficha = [fila, columna] - jugador = 1 | 2 ESTA FUNCION SOLO CONTEMPLA COMER UNA FICHA A LA VEZ
         const movimientosPosibles = this.getMovimientosPosibles(ficha, jugador);
         const movimientosValidos = [];
         for (const movimiento of movimientosPosibles) {
@@ -126,8 +157,16 @@ class Tablero {
             const puedeCapturar = this.getEsMovimientoDeCaptura(ficha, jugador, movimiento);
             const esEspacioVacio = this.getEsVacio(movimiento);
             if (puedeCapturar || esEspacioVacio) { //TODO: CAMBIAR 
-                const posicionesSiguientes = puedeCapturar ? this.getPosicionesPostCaptura(ficha, movimiento) : [movimiento];
-                movimientosValidos.push( ...posicionesSiguientes.map( movimiento => ({movimiento, puedeCapturar }) ) );
+                let posicionesSiguientes = [];
+                let fichasCapturadas;
+                if(puedeCapturar){
+                    const {posicionesPostCaptura, posFichaCapturada } = this.getPosicionesPostCaptura(ficha, movimiento);
+                    posicionesSiguientes = posicionesPostCaptura;
+                    fichasCapturadas = [posFichaCapturada];
+                }else{
+                    posicionesSiguientes = [movimiento];
+                }
+                movimientosValidos.push( ...posicionesSiguientes.map( movimiento => ({movimiento, puedeCapturar, fichasCapturadas }) ) );
             }
         }
         return this.removerMovimientosDuplicados(movimientosValidos);
@@ -182,7 +221,7 @@ class Tablero {
                 posicionActual = [filaAnterior + unitVarFila, columnaAnterior + unitVarColumna];
             }
         }
-        return posicionesPostCaptura;
+        return {posicionesPostCaptura, posFichaCapturada: movimiento};
     }
     /**
      * Dado un jugaror (1 | 2) verifica si la posición dada 
