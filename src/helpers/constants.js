@@ -1,3 +1,5 @@
 export const GANAN_BLANCAS = 'GANAN_BLANCAS';
 export const GANAN_NEGRAS = 'GANAN_NEGRAS';
 export const JUEGO_INCONCLUSO = 'JUEGO_INCONCLUSO';
+export const JUEGO_NO_INICIADO = 'JUEGO_NO_INICIADO';
+export const EMPATE = 'EMPATE';

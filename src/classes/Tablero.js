@@ -1,4 +1,4 @@
-import {GANAN_BLANCAS, GANAN_NEGRAS, JUEGO_INCONCLUSO} from '../helpers/constants';
+import {EMPATE, GANAN_BLANCAS, GANAN_NEGRAS, JUEGO_INCONCLUSO} from '../helpers/constants';
 import {getInitialTable} from '../helpers';
 class Tablero {
     table = []; //Tablero de damas 
@@ -58,7 +58,13 @@ class Tablero {
         }
     }
     calcularResultado(){ //si ya no hay piezas de un jugador osi es que hay el juego sigue
-        return (this.cantPiezasBlancas === 0 ? GANAN_NEGRAS : (this.cantPiezasNegras === 0 ? GANAN_BLANCAS : JUEGO_INCONCLUSO))
+        const ganador = (this.cantPiezasBlancas === 0 ? GANAN_NEGRAS : (this.cantPiezasNegras === 0 ? GANAN_BLANCAS : JUEGO_INCONCLUSO));
+        const esEmpate = this.getAllJugadas(1).length + this.getAllJugadas(2).length === 0;
+        if(ganador!== JUEGO_INCONCLUSO){
+            return ganador;
+        }else if(esEmpate){
+            return EMPATE;
+        }
     }
     serializarTablero(){ //Convierte todo el tablero a un string
         return this.table.reduce((textSerialFinal, fila)=>(`${textSerialFinal}${
@@ -155,12 +161,19 @@ class Tablero {
     }
     getJugadaRandom(jugador){
         const jugadasPosibles = this.getAllJugadas(jugador);
+        if(!jugadasPosibles.length){
+            return null;
+        }
         const randomIndex = Math.floor( Math.random() * jugadasPosibles.length );
         return jugadasPosibles[randomIndex];
     }
     jugarRandom(jugador){
         const jugadaRandom = this.getJugadaRandom(jugador);
-        this.jugar(jugadaRandom);
+        if(jugadaRandom){
+            this.jugar(jugadaRandom);
+            return true;
+        }
+        return false;
     }
     getAllJugadas(jugador){
         const jugadas = [] // [{ ficha, movimiento, haCapturado, capturados:[] }]

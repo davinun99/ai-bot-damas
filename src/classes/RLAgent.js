@@ -1,12 +1,12 @@
 
-import { JUEGO_INCONCLUSO } from 'src/helpers/constants';
+import { EMPATE, JUEGO_INCONCLUSO, JUEGO_NO_INICIADO } from 'src/helpers/constants';
 import Tablero from './Tablero';
 export default class RLAgent{
     lookupTable = {};//Hash map
     tablero = new Tablero();//Tablero actual
     alpha = 0.0;
     estaEntrenando = true;//Parametro para actualizar o no la tabla
-    resultadoDelJuego = 0;
+    resultadoDelJuego = JUEGO_NO_INICIADO;
     ultimoTablero = new Tablero();//Auxiliar con el ultimo tablero usado
     qRate = 0.1;
     N;
@@ -22,6 +22,9 @@ export default class RLAgent{
         }
         return this.lookupTable[serialTablero];
     }
+    actualizarAlpha( currentGame ){
+        this.alpha = 0.5 - 0.49 * currentGame / this.N;
+    }
     actualizarProbabilidad( tablero, probSgteEstado, jugador ){//Tablero = Tablero(), jugador= 1 | 2
         let prob = tablero.getRewardByJugador(jugador);
         prob = prob + this.alpha * (probSgteEstado - prob);//No se si podemos usar asi o cambiar 
@@ -33,6 +36,10 @@ export default class RLAgent{
         let jugadaARealizar;
         let prob, maxProb = -1;
         const jugadas = this.tablero.getAllJugadas(jugador);
+        if( !jugadas.length ){
+            this.resultadoDelJuego = EMPATE;
+            return false;
+        }
         for (const jugada of jugadas) {//recorrer las jugadas posibles
             const copiaTablero = this.tablero.clonarTablero();
             this.tablero.jugar(jugada);
@@ -52,16 +59,27 @@ export default class RLAgent{
             const copiaTablero = this.tablero.clonarTablero();
             this.ultimoTablero = new Tablero(copiaTablero);
         }
+        return true;
     }
     resetearTablero(){
         this.tablero = new Tablero();
         this.ultimoTablero = new Tablero();
     }
     jugarRandom(jugador, esAgente = false){
-        this.tablero.jugarRandom(jugador);
+        const haJugado = this.tablero.jugarRandom(jugador);
+        if(!haJugado){
+            return false;
+        }
         if(esAgente){
             const copiaTablero = this.tablero.clonarTablero();
             this.ultimoTablero = new Tablero(copiaTablero);
+        }
+        return true;
+    }
+    entrenarVsRandom(){
+        for (let i = 0; i < this.N; i++) {
+            this.actualizarAlpha(i);
+            this.jugarVsRandom();
         }
     }
     jugarVsRandom(jugador = 1){
@@ -72,17 +90,22 @@ export default class RLAgent{
         let jugadas = 49;
         let q = 0;
         do{
+            let haJugado = false;
             if(turno == jugador){
                 q = Math.random();
                 if( q < this.qRate || !this.estaEntrenando){
-                    this.jugar(jugador);
+                    haJugado = this.jugar(jugador);
                 }else{
-                    this.jugarRandom(jugador, true);
+                    haJugado = this.jugarRandom(jugador, true);
                 }
             }else{
-                this.jugarRandom(contrario, false);
+                haJugado = this.jugarRandom(contrario, false);
             }
-            this.resultadoDelJuego = this.tablero.calcularResultado();
+            if(!haJugado){
+                this.resultadoDelJuego = EMPATE;
+            }else{
+                this.resultadoDelJuego = this.tablero.calcularResultado();
+            }
             if(this.resultadoDelJuego !== JUEGO_INCONCLUSO){
                 //this.tablero.dibujarTablero();
                 if( !this.tablero.jugadorEsGanador(jugador) && this.estaEntrenando){//perdimos, actualizar tablero
@@ -94,5 +117,6 @@ export default class RLAgent{
             jugadas--;
         } while( jugadas > 0 );
         this.resetearTablero();
+        this.resultadoDelJuego = JUEGO_INCONCLUSO;
     }
 }
