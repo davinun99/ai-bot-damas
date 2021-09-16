@@ -63,9 +63,10 @@ class Tablero {
     }
     dibujarTablero(){
         let str = '';
+        const piezasPosibles = ['_','n','b','_','_','_','_','_','N','B'];
         for (let i = 0; i < this.table.length; i++) {
             for (let j = 0; j < this.table[i].length; j++) {
-                const pieza = this.table[i][j] === 1 ? 'N' : ( this.table[i][j] === 2 ? 'B' : '_' );
+                const pieza = piezasPosibles[this.table[i][j]];
                 str = str + pieza + '\t';
             }
             str = str + '\n';
@@ -123,7 +124,7 @@ class Tablero {
                 }
             }
         }else{
-            const desplazamiento = jugador === 2 ? -1 : 1;
+            const desplazamiento = jugador === 2 ? -1 : 1; // Si son las blancas, el movimiento es hacia abajo(Arriba estan las filas mayores)
             movimientos = [
                 [fila + desplazamiento, columna + 1],
                 [fila + desplazamiento, columna - 1],
@@ -147,6 +148,15 @@ class Tablero {
             };
         }, {} ); 
         return Object.values(hashMovimientosValidos);
+    }
+    getJugadaRandom(jugador){
+        const jugadasPosibles = this.getAllJugadas(jugador);
+        const randomIndex = Math.floor( Math.random() * jugadasPosibles.length );
+        return jugadasPosibles[randomIndex];
+    }
+    jugarRandom(jugador){
+        const jugadaRandom = this.getJugadaRandom(jugador);
+        this.jugar(jugadaRandom);
     }
     getAllJugadas(jugador){
         const jugadas = [] // [{ ficha, movimiento, haCapturado, capturados:[] }]
@@ -296,7 +306,7 @@ class Tablero {
      */
     getHayAliadoEnPosicion(jugador, posicion) {
         const [fila, columna] = posicion;
-        return this.table[fila][columna] === jugador;
+        return this.table[fila][columna] === jugador || this.table[fila][columna] === jugador + 7;
     }
     /**
      * Dado un jugaror (1 | 2) verifica si la posición dada 
@@ -307,7 +317,8 @@ class Tablero {
      */
     getHayEnemigoEnPosicion(jugador, posicion) {
         const [fila, columna] = posicion;
-        return !this.getEsVacio(posicion) && this.table[fila][columna] !== jugador;
+        const enemigo = (jugador % 2) + 1;
+        return this.table[fila][columna] === enemigo || this.table[fila][columna] === enemigo + 7;
     }
     /**
      * Verifica si una posición dada no contiene ninguna pieza
