@@ -2,6 +2,9 @@ import {GANAN_BLANCAS, GANAN_NEGRAS, JUEGO_INCONCLUSO} from '../helpers/constant
 import {getInitialTable} from '../helpers';
 class Tablero {
     table = getInitialTable(); //Tablero de damas 
+    constructor( table ){
+        this.table = table;
+    }
     getCantidadDePieza( codPieza ){
         let cont = 0;
         for (const fila of this.table) {
@@ -23,7 +26,7 @@ class Tablero {
     get cantDamasNegras(){
         return this.getCantidadDePieza(8);
     };
-    get cantPuntosPorFicha(jugador){
+    getTotalPuntos(jugador){
         if(jugador === 1){//ES NEGRAS
             return this.cantDamasNegras / 12 + this.cantPeonesNegros / 36;
         }else{
@@ -190,7 +193,22 @@ class Tablero {
         }
         return movimientosFinales;
     }
-
+    getRewardByJugador(jugador){
+        const result = this.calcularResultado();
+        let reward = 0;//MAX REWARD POSIBLE = 1
+        const contrario = (jugador % 2) + 1;
+        if( (result === GANAN_BLANCAS && jugador === 2) || (result === GANAN_NEGRAS && jugador === 1) ){
+            reward = 1;//Si el jugador gana, damos el maximo reward
+        }else if( (result === GANAN_BLANCAS && jugador === 1) || (result === GANAN_NEGRAS && jugador === 2) ){
+            reward = 0;//Si el jugador pierde, damos el peor reward
+        }
+        else if( this.getTotalPuntos(jugador) > this.getTotalPuntos(contrario) ){
+            reward = 0.5;//Si el jugador consigue mas puntos x pieza, damos un buen reward
+        }else if( this.getDamasByJugador(jugador) > this.getDamasByJugador(contrario) ){
+            reward = 0.3;//Si el jugador obtiene mas damas, damos un reward
+        }
+        return reward;
+    }
     getMovimientosByFicha(ficha, jugador) { //ficha = [fila, columna] - jugador = 1 | 2 ESTA FUNCION SOLO CONTEMPLA COMER UNA FICHA A LA VEZ
         const movimientosPosibles = this.getMovimientosPosibles(ficha, jugador);
         const movimientosValidos = [];

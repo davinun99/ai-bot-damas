@@ -1,5 +1,6 @@
 
 import {GANAN_BLANCAS, GANAN_NEGRAS} from '../helpers/constants'
+import Tablero from './Tablero';
 export default class RLAgent{
     lookupTable = {};//Hash map
     tablero = new Tablero();//Tablero actual
@@ -13,15 +14,6 @@ export default class RLAgent{
         this.N = N;
         this.lookupTable = {};
     }
-    calcularReward( tablero, jugador ){ //Tablero = Tablero(), jugador = 1 |2
-        const result = tablero.calcularResultado();
-        if( (result === GANAN_BLANCAS && jugador === 2) || (result === GANAN_NEGRAS && jugador === 1) ){
-            return 1;
-        }else if( (result === GANAN_BLANCAS && jugador === 2) || (result === GANAN_NEGRAS && jugador === 1) ){
-            return 0;
-        }
-        //TODO: AGREGAR CONDICIONALES QUE USEN LAS PIEZAS U OTRAS VARIABLES 
-    }
     getProbabilidad( tablero ){//Tablero = Tablero()
         const serialTablero = tablero.serializarTablero();
         if( typeof this.lookupTable[serialTablero] === 'undefined' ){
@@ -31,32 +23,35 @@ export default class RLAgent{
         return this.lookupTable[serialTablero];
     }
     actualizarProbabilidad( tablero, probSgteEstado, jugador ){//Tablero = Tablero(), jugador= 1 | 2
-        let prob = this.calcularReward(tablero, jugador);
+        let prob = this.tablero.getRewardByJugador(jugador);
         prob = prob + this.alpha * (probSgteEstado - prob);//No se si podemos usar asi o cambiar 
         const serialTablero = tablero.serializarTablero();
         this.lookupTable[serialTablero] = prob;
     }
     jugar( jugador ){//jugador= 1 | 2
-        //TODO: ADAPTAR A DAMAS
-        let fila, columna = 0;
+        //ELITISTA?
+        let jugadaARealizar;
         let prob, maxProb = Number.MIN_VALUE;
-        const table = this.tablero.table
-        for (let i = 0; i < table.length; i++) {
-            for (let j = 0; j < table[i].length; j++) {
-                if( table[i][j] === 0 ){
-                    table[i][j] = jugador;
-                    prob = this.calcularReward(this.tablero, jugador);
-                    if( prob > maxProb){
-                        maxProb = prob;
-                        fila = i;
-                        columna = j
-                    }
-                    table[i][j] = 0;
-                }
+        const table = this.tablero.table    
+        const jugadas = this.tablero.getAllJugadas(jugador);
+        for (const jugada of jugadas) {//recorrer las jugadas posibles
+            const copiaTablero = this.tablero.clonarTablero();
+            this.tablero.jugar(jugada);
+            prob = this.tablero.getRewardByJugador(jugador);
+            //calcular reward del tablero formado
+            if(prob > maxProb){
+                maxProb = prob;//Actualizar maximo reward
+                jugadaARealizar = jugada;
             }
+            this.tablero.table = copiaTablero;
         }
         if(this.estaEntrenando){
             this.actualizarProbabilidad(this.ultimoTablero, maxProb, jugador);
+        }
+        if(jugadaARealizar){
+            this.tablero.jugar(jugadaARealizar);
+            const copiaTablero = this.tablero.clonarTablero();
+            this.ultimoTablero = new Tablero(copiaTablero);
         }
     }
 }
