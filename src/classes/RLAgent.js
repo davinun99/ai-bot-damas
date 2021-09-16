@@ -31,7 +31,7 @@ export default class RLAgent{
     jugar( jugador ){//jugador= 1 | 2
         //ELITISTA?
         let jugadaARealizar;
-        let prob, maxProb = Number.MIN_VALUE;
+        let prob, maxProb = -1;
         const table = this.tablero.table    
         const jugadas = this.tablero.getAllJugadas(jugador);
         for (const jugada of jugadas) {//recorrer las jugadas posibles

@@ -62,13 +62,15 @@ class Tablero {
         }`),'');
     }
     dibujarTablero(){
+        let str = '';
         for (let i = 0; i < this.table.length; i++) {
             for (let j = 0; j < this.table[i].length; j++) {
-                const pieza = this.table[i][j] === 1 ? 'N' : ( this.table[i][j] === 2 ? 'B' : ' ' );
-                console.log( pieza + '\t');
+                const pieza = this.table[i][j] === 1 ? 'N' : ( this.table[i][j] === 2 ? 'B' : '_' );
+                str = str + pieza + '\t';
             }
-            console.log( '\n');
+            str = str + '\n';
         }
+        console.log(str);
     }
     getFichas(jugador){ //jugador = 1 | 2
         const fichas = [];

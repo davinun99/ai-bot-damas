@@ -19,31 +19,36 @@
 
 <script>
 import Tablero from 'src/classes/Tablero.js';
-
+import RLAgent from 'src/classes/RLAgent.js';
 export default {
   name: 'Index',
   data() {
     return {
-      tablero: null,
       interactive: true,
       selectedElement: [],
       movimientosPosibles: [],
+      agenteRl: null,
     }
   },
   methods: {
     select(indexElem, canMove, jugador) {
-      //if (!this.interactive || !canMove) return;
+      if (!this.interactive || !canMove) return;
       this.selectedElement = indexElem;
       this.movimientosPosibles = this.tablero.getJugadasByFicha(indexElem, jugador);
     },
   },
   computed: {
     tabla() {
-      return this.tablero ? this.tablero.table : '';
+      return this.agenteRl.tablero ? this.agenteRl.tablero.table : '';
     },
+    tablero(){
+      return this.agenteRl.tablero;
+    }
   },
   created() {
-    this.tablero = new Tablero();
+    this.agenteRl = new RLAgent(10000);
+    const jugada = this.agenteRl.jugar(1);
+    //this.agenteRl.tablero.dibujarTablero();
   }
 }
 </script>
