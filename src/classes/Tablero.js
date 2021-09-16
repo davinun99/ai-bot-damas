@@ -1,7 +1,14 @@
 import {GANAN_BLANCAS, GANAN_NEGRAS, JUEGO_INCONCLUSO} from '../helpers/constants';
 import {getInitialTable} from '../helpers';
 class Tablero {
-    table = getInitialTable(); //Tablero de damas 
+    table = []; //Tablero de damas 
+    constructor( table ){
+        this.table = table || getInitialTable();
+    }
+    jugadorEsGanador(jugador){
+        const resultado = this.calcularResultado();
+        return jugador === 1 ? (resultado === GANAN_NEGRAS) : (resultado === GANAN_BLANCAS)
+    }
     getCantidadDePieza( codPieza ){
         let cont = 0;
         for (const fila of this.table) {
@@ -23,12 +30,32 @@ class Tablero {
     get cantDamasNegras(){
         return this.getCantidadDePieza(8);
     };
-    
+    getTotalPuntos(jugador){
+        if(jugador === 1){//ES NEGRAS
+            return this.cantDamasNegras / 12 + this.cantPeonesNegros / 36;
+        }else{
+            return this.cantDamasBlancas / 12 + this.cantPeonesBlancos / 36;
+        }
+    }
     get cantFichasBlancas(){
         return this.cantPeonesBlancos + this.cantDamasBlancas;
     }
     get cantFichasNegras(){
         return this.cantPeonesNegros + this.cantDamasNegras;
+    }
+    getDamasByJugador(jugador){
+        if(jugador === 1){//ES NEGRAS
+            return this.cantDamasNegras;
+        }else{
+            return this.cantDamasBlancas;
+        }
+    }
+    getFichasByJugador(jugador){
+        if(jugador === 1){//ES NEGRAS
+            return this.cantFichasNegras;
+        }else {
+            return this.cantFichasBlancas;
+        }
     }
     calcularResultado(){ //si ya no hay piezas de un jugador osi es que hay el juego sigue
         return (this.cantPiezasBlancas === 0 ? GANAN_NEGRAS : (this.cantPiezasNegras === 0 ? GANAN_BLANCAS : JUEGO_INCONCLUSO))
@@ -39,20 +66,23 @@ class Tablero {
         }`),'');
     }
     dibujarTablero(){
+        let str = '';
+        const piezasPosibles = ['_','n','b','_','_','_','_','_','N','B'];
         for (let i = 0; i < this.table.length; i++) {
             for (let j = 0; j < this.table[i].length; j++) {
-                const pieza = this.table[i][j] === 1 ? 'N' : ( this.table[i][j] === 2 ? 'B' : ' ' );
-                console.log( pieza + '\t');
+                const pieza = piezasPosibles[this.table[i][j]];
+                str = str + pieza + '\t';
             }
-            console.log( '\n');
+            str = str + '\n';
         }
+        console.log(str);
     }
     getFichas(jugador){ //jugador = 1 | 2
         const fichas = [];
         for (let i = 0; i < this.table.length; i++) {
             for (let j = 0; j < this.table[i].length; j++) {
                 if( this.table[i][j] === jugador || this.table[i][j] === jugador + 7 ){
-                    fichas.push({fila:i, columna: j});
+                    fichas.push( [i,j] );
                 }
             }
         }
@@ -98,7 +128,7 @@ class Tablero {
                 }
             }
         }else{
-            const desplazamiento = jugador === 2 ? -1 : 1;
+            const desplazamiento = jugador === 2 ? -1 : 1; // Si son las blancas, el movimiento es hacia abajo(Arriba estan las filas mayores)
             movimientos = [
                 [fila + desplazamiento, columna + 1],
                 [fila + desplazamiento, columna - 1],
@@ -123,6 +153,15 @@ class Tablero {
         }, {} ); 
         return Object.values(hashMovimientosValidos);
     }
+    getJugadaRandom(jugador){
+        const jugadasPosibles = this.getAllJugadas(jugador);
+        const randomIndex = Math.floor( Math.random() * jugadasPosibles.length );
+        return jugadasPosibles[randomIndex];
+    }
+    jugarRandom(jugador){
+        const jugadaRandom = this.getJugadaRandom(jugador);
+        this.jugar(jugadaRandom);
+    }
     getAllJugadas(jugador){
         const jugadas = [] // [{ ficha, movimiento, haCapturado, capturados:[] }]
         for(const ficha of this.getFichas(jugador)){
@@ -134,8 +173,11 @@ class Tablero {
         }
         return jugadas;
     }
+    clonarTablero(){
+        return [...this.table.map(movs => [...movs])];
+    }
     getJugadasByFicha(ficha, jugador){
-        const tableroOriginal = [...this.table.map(movs => [...movs])];
+        const tableroOriginal = this.clonarTablero();
         const movimientosFicha = this.getMovimientosByFicha(ficha, jugador);
         const movimientos = this.getJugadasByFichaRec(ficha, jugador, movimientosFicha);
         this.table = tableroOriginal;
@@ -147,7 +189,7 @@ class Tablero {
         for (const movimiento of movimientos) {
             //Si se puede capturar mas fichas, siguen habiendo movimientos posibles
             if( movimiento.puedeCapturar ){
-                const tableroActual = [...this.table.map(movs => [...movs])];
+                const tableroActual = this.clonarTablero();
                 const [movFila, movCol] = movimiento.movimiento;
                 for (let i = 0; i < movimiento.fichasCapturadas.length; i++) {
                     const [filaCapt, colCapt] = movimiento.fichasCapturadas[i]
@@ -167,7 +209,22 @@ class Tablero {
         }
         return movimientosFinales;
     }
-
+    getRewardByJugador(jugador){
+        const result = this.calcularResultado();
+        let reward = 0;//MAX REWARD POSIBLE = 1
+        const contrario = (jugador % 2) + 1;
+        if( (result === GANAN_BLANCAS && jugador === 2) || (result === GANAN_NEGRAS && jugador === 1) ){
+            reward = 1;//Si el jugador gana, damos el maximo reward
+        }else if( (result === GANAN_BLANCAS && jugador === 1) || (result === GANAN_NEGRAS && jugador === 2) ){
+            reward = 0;//Si el jugador pierde, damos el peor reward
+        }
+        else if( this.getTotalPuntos(jugador) > this.getTotalPuntos(contrario) ){
+            reward = 0.5;//Si el jugador consigue mas puntos x pieza, damos un buen reward
+        }else if( this.getDamasByJugador(jugador) > this.getDamasByJugador(contrario) ){
+            reward = 0.3;//Si el jugador obtiene mas damas, damos un reward
+        }
+        return reward;
+    }
     getMovimientosByFicha(ficha, jugador) { //ficha = [fila, columna] - jugador = 1 | 2 ESTA FUNCION SOLO CONTEMPLA COMER UNA FICHA A LA VEZ
         const movimientosPosibles = this.getMovimientosPosibles(ficha, jugador);
         const movimientosValidos = [];
@@ -253,7 +310,7 @@ class Tablero {
      */
     getHayAliadoEnPosicion(jugador, posicion) {
         const [fila, columna] = posicion;
-        return this.table[fila][columna] === jugador;
+        return this.table[fila][columna] === jugador || this.table[fila][columna] === jugador + 7;
     }
     /**
      * Dado un jugaror (1 | 2) verifica si la posición dada 
@@ -264,7 +321,8 @@ class Tablero {
      */
     getHayEnemigoEnPosicion(jugador, posicion) {
         const [fila, columna] = posicion;
-        return !this.getEsVacio(posicion) && this.table[fila][columna] !== jugador;
+        const enemigo = (jugador % 2) + 1;
+        return this.table[fila][columna] === enemigo || this.table[fila][columna] === enemigo + 7;
     }
     /**
      * Verifica si una posición dada no contiene ninguna pieza
@@ -276,7 +334,7 @@ class Tablero {
         return this.table[fila][columna] === 0;
     }
     coronar(){//Verifica si hay peones en las ultimas lineas y los corona
-        const len = this.table.length;
+        const len = this.table.length - 1;
         for (let i = 0; i < this.table[0].length; i++) {
             if( this.table[0][i] === 2 ){ //SI HAY UN PEON BLANCO EN LA PRIMERA FILA -> CORONAR
                 this.table[0][i]+=7;
@@ -285,13 +343,13 @@ class Tablero {
             }
         }
     }
-    jugar(jugada){ //movimiento: {fila, columna}, haCapturado: boolean, fichasCapturadas:[{fila, columna}]}
-        const {movimiento, haCapturado, fichasCapturadas, ficha} = jugada;
+    jugar(jugada){ //movimiento: {fila, columna}, puedeCapturar: boolean, fichasCapturadas:[{fila, columna}]}
+        const {movimiento, puedeCapturar, fichasCapturadas, ficha} = jugada;
         const [fichaFila, fichaColumna] = ficha;
         const [movFila, movColumna] = movimiento;
         this.table[movFila][movColumna] = this.table[fichaFila][fichaColumna]; // MUEVO LA FICHA ACTUAL A SU POSICION LUEGO DE LA JUGADA
         this.table[fichaFila][fichaColumna] = 0;//LA POSICION VIEJA DE LA FICHA QUEDA VACIA
-        haCapturado && fichasCapturadas.forEach( ([captFila, captColumna])=> {//TODAS LAS POCISIONES QUE CAPTURA QUEDAN VACIAS
+        puedeCapturar && fichasCapturadas && fichasCapturadas.forEach( ([captFila, captColumna])=> {//TODAS LAS POCISIONES QUE CAPTURA QUEDAN VACIAS
             this.table[captFila][captColumna] = 0;
         });
         this.coronar();

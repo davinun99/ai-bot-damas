@@ -10,9 +10,11 @@
           <q-btn flat v-if="elem === 1 || elem === 2" 
             @click="select([index, indexElem], elem !== 1, elem)" class="pawn" 
             :class="[elem === 1 ? 'black-pawn' : 'white-pawn', { 'selected': index === selectedElement[0] && indexElem === selectedElement[1] }]" />
-          <q-btn flat v-if="elem === 8 || elem === 9" 
+          <q-btn flat v-else-if="elem === 8 || elem === 9" 
             @click="select([index, indexElem], elem !== 8)" class="pawn" 
             :class="[elem === 8 ? 'black-pawn' : 'white-pawn', { 'selected': index === selectedElement[0] && indexElem === selectedElement[1] }]" />
+          <q-btn flat v-else 
+            @click="selectMovement([index, indexElem])" class="pawn" />
         </div>
       </div>
     </div>
@@ -24,29 +26,53 @@ import Tablero from 'src/classes/Tablero.js';
 //código a borrar Mati
 import MinimaxPodaAlfaBeta from 'src/classes/MinimaxPodaAlfaBeta.js';
 
+import RLAgent from 'src/classes/RLAgent.js';
 export default {
   name: 'Index',
   data() {
     return {
-      tablero: null,
       interactive: true,
       selectedElement: [],
       movimientosPosibles: [],
       //codigo a borrar Mati
       imprimir: null,
+      agenteRl: null,
     }
   },
   methods: {
     select(indexElem, canMove, jugador) {
-      //if (!this.interactive || !canMove) return;
+      if (!this.interactive || !canMove) return;
       this.selectedElement = indexElem;
       this.movimientosPosibles = this.tablero.getJugadasByFicha(indexElem, jugador);
     },
+    selectMovement(posicion) {
+      // console.log('posicion de movimiento:', posicion);
+      // console.log('this.movimientosPosibles', this.movimientosPosibles);
+      if (!this.selectedElement) return;
+      for (let movimientoPosible of this.movimientosPosibles) {
+        if (movimientoPosible.movimiento[0] === posicion[0] && 
+            movimientoPosible.movimiento[1] === posicion[1]) {
+          this.tablero.jugar({...movimientoPosible, ficha: this.selectedElement});
+          this.handleTerminarTurnoDeHumano();
+          break;
+        }
+      }
+    },
+    handleTerminarTurnoDeHumano() {
+      this.interactive = false;
+      this.selectedElement = [];
+      this.movimientosPosibles = [];
+      const jugada = this.agenteRl.jugar(1);
+      this.interactive = true;
+    }
   },
   computed: {
     tabla() {
-      return this.tablero ? this.tablero.table : '';
+      return this.agenteRl.tablero ? this.agenteRl.tablero.table : '';
     },
+    tablero(){
+      return this.agenteRl.tablero;
+    }
   },
   created() {
     this.tablero = new Tablero();
@@ -54,6 +80,9 @@ export default {
     this.minimax = new MinimaxPodaAlfaBeta();
     //codigo a borrar Mati
     this.imprimir = this.minimax.rewardJugada(this.tablero);
+    this.agenteRl = new RLAgent(10000);
+    // const jugada = this.agenteRl.jugar(1);
+    //this.agenteRl.tablero.dibujarTablero();
   }
 }
 </script>
