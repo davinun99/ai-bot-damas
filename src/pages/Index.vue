@@ -8,9 +8,11 @@
           <q-btn flat v-if="elem === 1 || elem === 2" 
             @click="select([index, indexElem], elem !== 1, elem)" class="pawn" 
             :class="[elem === 1 ? 'black-pawn' : 'white-pawn', { 'selected': index === selectedElement[0] && indexElem === selectedElement[1] }]" />
-          <q-btn flat v-if="elem === 8 || elem === 9" 
+          <q-btn flat v-else-if="elem === 8 || elem === 9" 
             @click="select([index, indexElem], elem !== 8)" class="pawn" 
             :class="[elem === 8 ? 'black-pawn' : 'white-pawn', { 'selected': index === selectedElement[0] && indexElem === selectedElement[1] }]" />
+          <q-btn flat v-else 
+            @click="selectMovement([index, indexElem])" class="pawn" />
         </div>
       </div>
     </div>
@@ -36,6 +38,22 @@ export default {
       this.selectedElement = indexElem;
       this.movimientosPosibles = this.tablero.getJugadasByFicha(indexElem, jugador);
     },
+    selectMovement(posicion) {
+      // console.log('posicion de movimiento:', posicion);
+      // console.log('this.movimientosPosibles', this.movimientosPosibles);
+      if (!this.selectedElement) return;
+      for (let movimientoPosible of this.movimientosPosibles) {
+        if (movimientoPosible.movimiento[0] === posicion[0] && 
+            movimientoPosible.movimiento[1] === posicion[1]) {
+          this.tablero.jugar({...movimientoPosible, ficha: this.selectedElement});
+          this.handleTurnoDeHumano();
+          break;
+        }
+      }
+    },
+    handleTurnoDeHumano() {
+      const jugada = this.agenteRl.jugar(1);
+    }
   },
   computed: {
     tabla() {
@@ -47,7 +65,7 @@ export default {
   },
   created() {
     this.agenteRl = new RLAgent(10000);
-    const jugada = this.agenteRl.jugar(1);
+    // const jugada = this.agenteRl.jugar(1);
     //this.agenteRl.tablero.dibujarTablero();
   }
 }

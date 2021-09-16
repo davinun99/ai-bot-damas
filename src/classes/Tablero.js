@@ -328,13 +328,13 @@ class Tablero {
             }
         }
     }
-    jugar(jugada){ //movimiento: {fila, columna}, haCapturado: boolean, fichasCapturadas:[{fila, columna}]}
-        const {movimiento, haCapturado, fichasCapturadas, ficha} = jugada;
+    jugar(jugada){ //movimiento: {fila, columna}, puedeCapturar: boolean, fichasCapturadas:[{fila, columna}]}
+        const {movimiento, puedeCapturar, fichasCapturadas, ficha} = jugada;
         const [fichaFila, fichaColumna] = ficha;
         const [movFila, movColumna] = movimiento;
         this.table[movFila][movColumna] = this.table[fichaFila][fichaColumna]; // MUEVO LA FICHA ACTUAL A SU POSICION LUEGO DE LA JUGADA
         this.table[fichaFila][fichaColumna] = 0;//LA POSICION VIEJA DE LA FICHA QUEDA VACIA
-        haCapturado && fichasCapturadas.forEach( ([captFila, captColumna])=> {//TODAS LAS POCISIONES QUE CAPTURA QUEDAN VACIAS
+        puedeCapturar && fichasCapturadas && fichasCapturadas.forEach( ([captFila, captColumna])=> {//TODAS LAS POCISIONES QUE CAPTURA QUEDAN VACIAS
             this.table[captFila][captColumna] = 0;
         });
         this.coronar();
