@@ -154,8 +154,11 @@ class Tablero {
         }
         return jugadas;
     }
+    clonarTablero(){
+        return [...this.table.map(movs => [...movs])];
+    }
     getJugadasByFicha(ficha, jugador){
-        const tableroOriginal = [...this.table.map(movs => [...movs])];
+        const tableroOriginal = this.clonarTablero();
         const movimientosFicha = this.getMovimientosByFicha(ficha, jugador);
         const movimientos = this.getJugadasByFichaRec(ficha, jugador, movimientosFicha);
         this.table = tableroOriginal;
@@ -167,7 +170,7 @@ class Tablero {
         for (const movimiento of movimientos) {
             //Si se puede capturar mas fichas, siguen habiendo movimientos posibles
             if( movimiento.puedeCapturar ){
-                const tableroActual = [...this.table.map(movs => [...movs])];
+                const tableroActual = this.clonarTablero();
                 const [movFila, movCol] = movimiento.movimiento;
                 for (let i = 0; i < movimiento.fichasCapturadas.length; i++) {
                     const [filaCapt, colCapt] = movimiento.fichasCapturadas[i]
