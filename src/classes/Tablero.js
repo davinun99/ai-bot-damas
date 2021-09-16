@@ -23,12 +23,32 @@ class Tablero {
     get cantDamasNegras(){
         return this.getCantidadDePieza(8);
     };
-    
+    get cantPuntosPorFicha(jugador){
+        if(jugador === 1){//ES NEGRAS
+            return this.cantDamasNegras / 12 + this.cantPeonesNegros / 36;
+        }else{
+            return this.cantDamasBlancas / 12 + this.cantPeonesBlancos / 36;
+        }
+    }
     get cantFichasBlancas(){
         return this.cantPeonesBlancos + this.cantDamasBlancas;
     }
     get cantFichasNegras(){
         return this.cantPeonesNegros + this.cantDamasNegras;
+    }
+    getDamasByJugador(jugador){
+        if(jugador === 1){//ES NEGRAS
+            return this.cantDamasNegras;
+        }else{
+            return this.cantDamasBlancas;
+        }
+    }
+    getFichasByJugador(jugador){
+        if(jugador === 1){//ES NEGRAS
+            return this.cantFichasNegras;
+        }else {
+            return this.cantFichasBlancas;
+        }
     }
     calcularResultado(){ //si ya no hay piezas de un jugador osi es que hay el juego sigue
         return (this.cantPiezasBlancas === 0 ? GANAN_NEGRAS : (this.cantPiezasNegras === 0 ? GANAN_BLANCAS : JUEGO_INCONCLUSO))
