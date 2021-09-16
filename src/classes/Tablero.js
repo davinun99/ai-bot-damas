@@ -1,9 +1,9 @@
 import {GANAN_BLANCAS, GANAN_NEGRAS, JUEGO_INCONCLUSO} from '../helpers/constants';
 import {getInitialTable} from '../helpers';
 class Tablero {
-    table = getInitialTable(); //Tablero de damas 
+    table = []; //Tablero de damas 
     constructor( table ){
-        this.table = table;
+        this.table = table || getInitialTable();
     }
     getCantidadDePieza( codPieza ){
         let cont = 0;
@@ -75,7 +75,7 @@ class Tablero {
         for (let i = 0; i < this.table.length; i++) {
             for (let j = 0; j < this.table[i].length; j++) {
                 if( this.table[i][j] === jugador || this.table[i][j] === jugador + 7 ){
-                    fichas.push({fila:i, columna: j});
+                    fichas.push( [i,j] );
                 }
             }
         }
@@ -317,7 +317,7 @@ class Tablero {
         return this.table[fila][columna] === 0;
     }
     coronar(){//Verifica si hay peones en las ultimas lineas y los corona
-        const len = this.table.length;
+        const len = this.table.length - 1;
         for (let i = 0; i < this.table[0].length; i++) {
             if( this.table[0][i] === 2 ){ //SI HAY UN PEON BLANCO EN LA PRIMERA FILA -> CORONAR
                 this.table[0][i]+=7;

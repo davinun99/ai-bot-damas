@@ -25,7 +25,7 @@ export default class RLAgent{
     actualizarProbabilidad( tablero, probSgteEstado, jugador ){//Tablero = Tablero(), jugador= 1 | 2
         let prob = this.tablero.getRewardByJugador(jugador);
         prob = prob + this.alpha * (probSgteEstado - prob);//No se si podemos usar asi o cambiar 
-        const serialTablero = tablero.serializarTablero();
+        const serialTablero = this.tablero.serializarTablero();
         this.lookupTable[serialTablero] = prob;
     }
     jugar( jugador ){//jugador= 1 | 2
