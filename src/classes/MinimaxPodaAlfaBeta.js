@@ -8,20 +8,28 @@ class MinimaxPodaAlfaBeta {
     profundidadMax = 4; //cantidad de niveles del árbol que como máximo bajará
     jugador = 2; //asumo que jugador es blancas (2)
     rival = 1; //asumo que es negras (1) el rival
+    movimientoElegido = [];
 
     constructor(){}
 
     jugar(){
-        //while (tableroActual.calcularResultado() == JUEGO_INCONCLUSO) {
-        for (let index = 0; index < 20; index++) {
+        let index = 0;
+        while (this.tableroActual.calcularResultado() == JUEGO_INCONCLUSO) {
+            index++;
+        //for (let index = 0; index < 25; index++) {
             this.tableroActual.dibujarTablero();
             //movimiento del rival
             console.log(index+") cantidad de fichas: "+this.tableroActual.cantFichasBlancas+" blancas y "+this.tableroActual.cantFichasNegras+" negras"); //mostramos al rival sus jugadas disponibles
             console.log("se elegira una jugada random entre las disponibles ");
             this.tableroActual.jugarRandom(this.rival);
             //movimiento del minimax
+            this.movimientoElegido = []; //hacemos vacío el movimiento elegido
             console.log("print minimax: "+this.maxValue(this.tableroActual,this.profundidadMax,this.alfa,this.beta));
-            this.tableroActual.jugarRandom(this.jugador);
+            console.log("juego: "+this.tableroActual.calcularResultado());
+            let {movimiento, puedeCapturar, fichasCapturadas, ficha} = this.movimientoElegido; //desarmamos el movimiento
+            let [movFila, movColumna] = movimiento; //ver valores del movimiento
+            console.log('mov elegido: ['+movFila+']['+movColumna+']');
+            this.tableroActual.jugar(this.movimientoElegido); //jugamos con el movimiento elegido que fue cargado en maxValue
         }
     }
 
@@ -36,7 +44,11 @@ class MinimaxPodaAlfaBeta {
         for (let movimiento of tableroActual.getAllJugadas(this.jugador)) { 
             //Jugamos cada movimiento y lo pasamos como parámetro al siguiente nivel del arbol
             tableroSimulado.jugar(movimiento);
-            alfa = this.max(alfa,this.minValue(tableroSimulado,profundidadMax-1,alfa,beta));
+            if (this.minValue(tableroSimulado,profundidadMax-1,alfa,beta) > alfa) {
+                alfa = this.minValue(tableroSimulado,profundidadMax-1,alfa,beta);
+                this.movimientoElegido = movimiento; //cargamos el movimiento en la variable global
+                //hacemos lo de movElegido solo en alfa porque alfa son las jugadas de nuestro algoritmo y beta del rival
+            }
             if (alfa >= beta) { //poda
                 return beta;
             }
