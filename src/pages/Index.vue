@@ -1,6 +1,5 @@
 <template>
   <q-page class="flex flex-center column">
-    impresión: {{imprimir}}
     <br>
     {{selectedElement}}
     {{movimientosPosibles}}
@@ -77,9 +76,10 @@ export default {
   created() {
     this.tablero = new Tablero();
     //código a borrar Mati
-    this.minimax = new MinimaxPodaAlfaBeta();
+    this.minimaxPoda = new MinimaxPodaAlfaBeta();
     //codigo a borrar Mati
-    this.imprimir = this.minimax.rewardJugada(this.tablero);
+    this.minimaxPoda.jugar();
+
     this.agenteRl = new RLAgent(10000);
     // const jugada = this.agenteRl.jugar(1);
     //this.agenteRl.tablero.dibujarTablero();
