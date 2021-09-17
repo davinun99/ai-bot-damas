@@ -14,6 +14,23 @@ export default class RLAgent{
         this.N = N;
         this.lookupTable = {};
     }
+    resetearTablero(){
+        this.tablero = new Tablero();
+        this.ultimoTablero = new Tablero();
+        this.resultadoDelJuego = JUEGO_NO_INICIADO;
+    }
+    calcularReward( tablero, jugador){
+        const contrario = (jugador % 2) + 1;
+        const rewardTablero = tablero.getRewardByJugador(jugador);
+        const result = this.tablero.calcularResultadoInt();
+        if( result === jugador ){
+            return 1;
+        }else if( result === contrario || result === 3 ){
+            return 0;
+        }else{
+            return rewardTablero ? rewardTablero : this.getProbabilidad(tablero);
+        }
+    }
     getProbabilidad( tablero ){//Tablero = Tablero()
         const serialTablero = tablero.serializarTablero();
         if( typeof this.lookupTable[serialTablero] === 'undefined' ){
@@ -26,7 +43,7 @@ export default class RLAgent{
         this.alpha = 0.5 - 0.49 * currentGame / this.N;
     }
     actualizarProbabilidad( tablero, probSgteEstado, jugador ){//Tablero = Tablero(), jugador= 1 | 2
-        let prob = tablero.getRewardByJugador(jugador);
+        let prob = this.calcularReward(tablero, jugador);
         prob = prob + this.alpha * (probSgteEstado - prob);//No se si podemos usar asi o cambiar 
         const serialTablero = tablero.serializarTablero();
         this.lookupTable[serialTablero] = prob;
@@ -43,7 +60,7 @@ export default class RLAgent{
         for (const jugada of jugadas) {//recorrer las jugadas posibles
             const copiaTablero = this.tablero.clonarTablero();
             this.tablero.jugar(jugada);
-            prob = this.tablero.getRewardByJugador(jugador);
+            prob = this.calcularReward(this.tablero, jugador);
             //calcular reward del tablero formado
             if(prob > maxProb){
                 maxProb = prob;//Actualizar maximo reward
@@ -54,11 +71,9 @@ export default class RLAgent{
         if(this.estaEntrenando){
             this.actualizarProbabilidad(this.ultimoTablero, maxProb, jugador);
         }
-        if(jugadaARealizar){
-            this.tablero.jugar(jugadaARealizar);
-            const copiaTablero = this.tablero.clonarTablero();
-            this.ultimoTablero = new Tablero(copiaTablero);
-        }
+        this.tablero.jugar(jugadaARealizar);
+        const copiaTablero = this.tablero.clonarTablero();
+        this.ultimoTablero = new Tablero(copiaTablero);
         return true;
     }
     resetearTablero(){
@@ -78,9 +93,13 @@ export default class RLAgent{
     }
     entrenarVsRandom(){
         for (let i = 0; i < this.N; i++) {
+            this.resetearTablero();
             this.actualizarAlpha(i);
             this.jugarVsRandom();
         }
+        this.resetearTablero();
+        this.actualizarAlpha(0.6);
+        console.log(JSON.parse(JSON.stringify(this.lookupTable)));
     }
     jugarVsRandom(jugador = 1){
         //Jugadas promedio de una partida = 49
@@ -91,9 +110,9 @@ export default class RLAgent{
         let q = 0;
         do{
             let haJugado = false;
-            if(turno == jugador){
+            if(turno === jugador){
                 q = Math.random();
-                if( q < this.qRate || !this.estaEntrenando){
+                if( q <= this.qRate || !this.estaEntrenando){
                     haJugado = this.jugar(jugador);
                 }else{
                     haJugado = this.jugarRandom(jugador, true);
@@ -104,19 +123,17 @@ export default class RLAgent{
             if(!haJugado){
                 this.resultadoDelJuego = EMPATE;
             }else{
-                this.resultadoDelJuego = this.tablero.calcularResultado();
+                this.resultadoDelJuego = this.tablero.calcularResultadoInt();
             }
-            if(this.resultadoDelJuego !== JUEGO_INCONCLUSO){
+            if(this.resultadoDelJuego !== 0){
                 //this.tablero.dibujarTablero();
                 if( !this.tablero.jugadorEsGanador(jugador) && this.estaEntrenando){//perdimos, actualizar tablero
-                    this.actualizarProbabilidad( this.ultimoTablero, this.tablero.getRewardByJugador(jugador), jugador );
+                    this.actualizarProbabilidad( this.ultimoTablero, this.calcularReward(this.tablero, jugador), jugador );
                 }
                 break;
             }
             turno = (turno % 2) + 1;
             jugadas--;
         } while( jugadas > 0 );
-        this.resetearTablero();
-        this.resultadoDelJuego = JUEGO_INCONCLUSO;
     }
 }
