@@ -57,6 +57,18 @@ class Tablero {
             return this.cantFichasBlancas;
         }
     }
+    calcularResultadoInt(){
+        let resultado = 0;
+        const esEmpate = this.getAllJugadas(1).length + this.getAllJugadas(2).length === 0;
+        if(this.cantFichasNegras === 0){
+            resultado = 2;//2 GANAN BLANCAS
+        }else if(this.cantFichasBlancas === 0){
+            resultado = 1; //1 GANAN NEGRAS
+        }else if(esEmpate){
+            resultado = 3;//EMPATE
+        }
+        return resultado;
+    }
     calcularResultado(){ //si ya no hay piezas de un jugador osi es que hay el juego sigue
         const ganador = (this.cantPiezasBlancas === 0 ? GANAN_NEGRAS : (this.cantPiezasNegras === 0 ? GANAN_BLANCAS : JUEGO_INCONCLUSO));
         const esEmpate = this.getAllJugadas(1).length + this.getAllJugadas(2).length === 0;
@@ -64,6 +76,8 @@ class Tablero {
             return ganador;
         }else if(esEmpate){
             return EMPATE;
+        }else{
+            return JUEGO_INCONCLUSO;
         }
     }
     serializarTablero(){ //Convierte todo el tablero a un string
@@ -73,10 +87,10 @@ class Tablero {
     }
     dibujarTablero(){
         let str = '';
-        const piezasPosibles = ['_','n','b','_','_','_','_','_','N','B'];
+        const fichasPosibles = ['_','n','b','_','_','_','_','_','N','B'];
         for (let i = 0; i < this.table.length; i++) {
             for (let j = 0; j < this.table[i].length; j++) {
-                const pieza = piezasPosibles[this.table[i][j]];
+                const pieza = fichasPosibles[this.table[i][j]];
                 str = str + pieza + '\t';
             }
             str = str + '\n';
@@ -223,18 +237,18 @@ class Tablero {
         return movimientosFinales;
     }
     getRewardByJugador(jugador){
-        const result = this.calcularResultado();
+        const result = this.calcularResultadoInt();
         let reward = 0;//MAX REWARD POSIBLE = 1
         const contrario = (jugador % 2) + 1;
-        if( (result === GANAN_BLANCAS && jugador === 2) || (result === GANAN_NEGRAS && jugador === 1) ){
+        if( result === jugador){
             reward = 1;//Si el jugador gana, damos el maximo reward
-        }else if( (result === GANAN_BLANCAS && jugador === 1) || (result === GANAN_NEGRAS && jugador === 2) ){
+        }else if( result === contrario){
             reward = 0;//Si el jugador pierde, damos el peor reward
         }
         else if( this.getTotalPuntos(jugador) > this.getTotalPuntos(contrario) ){
-            reward = 0.5;//Si el jugador consigue mas puntos x pieza, damos un buen reward
+            reward = 0.7;//Si el jugador consigue mas puntos x pieza, damos un buen reward
         }else if( this.getDamasByJugador(jugador) > this.getDamasByJugador(contrario) ){
-            reward = 0.3;//Si el jugador obtiene mas damas, damos un reward
+            reward = 0.6;//Si el jugador obtiene mas damas, damos un reward
         }
         return reward;
     }
