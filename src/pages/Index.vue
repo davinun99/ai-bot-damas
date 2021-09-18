@@ -1,5 +1,6 @@
 <template>
   <q-page class="flex flex-center column">
+    <br>
     {{selectedElement}}
     {{movimientosPosibles}}
     <div v-for="(fila, index) of tabla" :key="index" class="row">
@@ -21,6 +22,9 @@
 
 <script>
 import Tablero from 'src/classes/Tablero.js';
+//código a borrar Mati
+import MinimaxPodaAlfaBeta from 'src/classes/MinimaxPodaAlfaBeta.js';
+
 import RLAgent from 'src/classes/RLAgent.js';
 export default {
   name: 'Index',
@@ -29,6 +33,8 @@ export default {
       interactive: true,
       selectedElement: [],
       movimientosPosibles: [],
+      //codigo a borrar Mati
+      imprimir: null,
       agenteRl: null,
     }
   },
@@ -68,6 +74,12 @@ export default {
     }
   },
   created() {
+    this.tablero = new Tablero();
+    //código a borrar Mati
+    this.minimaxPoda = new MinimaxPodaAlfaBeta();
+    //codigo a borrar Mati
+    this.minimaxPoda.jugar();
+
     this.agenteRl = new RLAgent(10000);
     // const jugada = this.agenteRl.jugar(1);
     //this.agenteRl.tablero.dibujarTablero();
