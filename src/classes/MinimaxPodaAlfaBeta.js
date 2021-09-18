@@ -1,31 +1,47 @@
 import Tablero from 'src/classes/Tablero.js';
 import {GANAN_BLANCAS, GANAN_NEGRAS, JUEGO_INCONCLUSO} from '../helpers/constants';
-
 class MinimaxPodaAlfaBeta {
-    tableroActual = new Tablero();
+    tableroActual = null;
     alfa = -100000; 
     beta = 100000;
-    profundidadMax = 4; //cantidad de niveles del árbol que como máximo bajará
-    jugador = 2; //asumo que jugador es blancas (2)
-    rival = 1; //asumo que es negras (1) el rival
-    movimientoElegido = [];
+    profundidadMax = 1; //cantidad de niveles del árbol que como máximo bajará
+    jugador = 1; //asumo que jugador es blancas (2)
+    rival = 2; //asumo que es negras (1) el rival
+    movimientoElegido = {};
 
-    constructor(){}
+    constructor( jugador = 1, tablero ){
+        this.jugador = jugador;
+        this.rival = (this.jugador % 2) + 1;
+        this.tableroActual = tablero;
+    }
+    jugar( ){
+        console.log('Tablero',this.tableroActual);
+        if (this.tableroActual.getAllJugadas(this.rival).length === 0) { //si el rival ya no tiene movimientos posibles pierde
+            console.log("el rival ha perdido");
+        } else if(this.tableroActual.getAllJugadas(this.jugador).length === 0){ //si el jugador ya no tiene movimientos posibles pierde
+            console.log("minimax con poda ha perdido");
+        }else{
+            this.movimientoElegido = {}; //hacemos vacío el movimiento elegido
+            this.maxValue(this.tableroActual,this.profundidadMax,this.alfa,this.beta);
+            
+            let {movimiento, puedeCapturar, fichasCapturadas, ficha} = this.movimientoElegido; //desarmamos el movimiento
+            let [movFila, movColumna] = movimiento; //ver valores del movimiento
+            console.log('mov elegido: ['+movFila+']['+movColumna+']');
 
-    jugar(){
+            this.tableroActual.jugar(this.movimientoElegido); //jugamos con el movimiento elegido que fue cargado en maxValue
+        }
+    }
+    jugarVsRandom(){
         let index = 0;
         while (this.tableroActual.calcularResultado() === JUEGO_INCONCLUSO && index <50) { //limitamos a 200 turnos máximo
             index++;
-        //for (let index = 0; index < 25; index++) {
-            //antes de jugar vemos las jugadas disponibles
-            /*
             if (this.tableroActual.getAllJugadas(this.rival).length === 0) { //si el rival ya no tiene movimientos posibles pierde
                 console.log("el rival ha perdido");
                 break;
             } else if(this.tableroActual.getAllJugadas(this.jugador).length === 0){ //si el jugador ya no tiene movimientos posibles pierde
                 console.log("minimax con poda ha perdido");
                 break;
-            }else{*/ //de lo contrario sigue el juego
+            }else{
                 this.tableroActual.dibujarTablero();
 
                 console.log('cant mov rival '+this.tableroActual.getAllJugadas(this.rival));
@@ -38,15 +54,14 @@ class MinimaxPodaAlfaBeta {
                 console.log('movimiento de rival');
                 this.tableroActual.dibujarTablero();
                 //movimiento del minimax
-                this.movimientoElegido = []; //hacemos vacío el movimiento elegido
+                this.movimientoElegido = {}; //hacemos vacío el movimiento elegido
                 console.log("print minimax: "+this.maxValue(this.tableroActual,this.profundidadMax,this.alfa,this.beta));
                 //console.log("juego: "+this.tableroActual.calcularResultado());
                 let {movimiento, puedeCapturar, fichasCapturadas, ficha} = this.movimientoElegido; //desarmamos el movimiento
                 let [movFila, movColumna] = movimiento; //ver valores del movimiento
                 console.log('mov elegido: ['+movFila+']['+movColumna+']');
                 this.tableroActual.jugar(this.movimientoElegido); //jugamos con el movimiento elegido que fue cargado en maxValue
-            //}
-            //this.tableroActual.calcularResultado();
+            }
         }
         this.tableroActual.dibujarTablero();
     }
@@ -55,7 +70,7 @@ class MinimaxPodaAlfaBeta {
     maxValue(tableroActual,profundidadMax,alfa,beta){ //función max de minimax
         //tablero que simulará la jugada y la pasará al siguiente elemento
         let tableroSimulado = new Tablero(tableroActual.table);
-        if (profundidadMax <=0 || tableroActual.calcularResultado() != JUEGO_INCONCLUSO){ 
+        if (profundidadMax <=0 || tableroActual.calcularResultado() !== JUEGO_INCONCLUSO){ 
             //cutOff Test: Si ya se llegó al valor de corte o si la partida ya termina
             return this.rewardJugada(tableroActual);
         }

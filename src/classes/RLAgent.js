@@ -3,20 +3,22 @@ import { EMPATE, JUEGO_INCONCLUSO, JUEGO_NO_INICIADO } from 'src/helpers/constan
 import Tablero from './Tablero';
 export default class RLAgent{
     lookupTable = {};//Hash map
-    tablero = new Tablero();//Tablero actual
+    tablero = null;//Tablero actual
     alpha = 0.0;
     estaEntrenando = true;//Parametro para actualizar o no la tabla
     resultadoDelJuego = JUEGO_NO_INICIADO;
-    ultimoTablero = new Tablero();//Auxiliar con el ultimo tablero usado
-    qRate = 0.1;
+    ultimoTablero = null;//Auxiliar con el ultimo tablero usado
+    qRate = 0.2;
     N;
-    constructor( N ){
+    constructor( N, tablero ){
         this.N = N;
         this.lookupTable = {};
+        this.tablero = tablero;
+        this.ultimoTablero = tablero;
     }
     resetearTablero(){
-        this.tablero = new Tablero();
-        this.ultimoTablero = new Tablero();
+        this.ultimoTablero.resetearTablero();
+        this.tablero.resetearTablero();
         this.resultadoDelJuego = JUEGO_NO_INICIADO;
     }
     calcularReward( tablero, jugador){
@@ -77,8 +79,8 @@ export default class RLAgent{
         return true;
     }
     resetearTablero(){
-        this.tablero = new Tablero();
-        this.ultimoTablero = new Tablero();
+        this.tablero.resetearTablero();
+        this.ultimoTablero.resetearTablero();
     }
     jugarRandom(jugador, esAgente = false){
         const haJugado = this.tablero.jugarRandom(jugador);
@@ -96,10 +98,36 @@ export default class RLAgent{
             this.resetearTablero();
             this.actualizarAlpha(i);
             this.jugarVsRandom();
+            console.log('Entrenando...');
         }
         this.resetearTablero();
-        this.actualizarAlpha(0.6);
+        //this.actualizarAlpha(0.6);
         console.log(JSON.parse(JSON.stringify(this.lookupTable)));
+    }
+    expectarPartidaVsRandom(jugador, esAgente){
+        let haJugado = false;
+        const q = Math.random();
+        if(esAgente){
+            if( q <= this.qRate || !this.estaEntrenando){
+                haJugado = this.jugar(jugador); console.log('Agente ha jugado inteligente');
+            }else{
+                haJugado = this.jugarRandom(jugador, true); console.log('Agente ha jugado random');
+            }
+        }else{
+            haJugado = this.jugarRandom(jugador, false);
+        }
+        if(!haJugado){
+            this.resultadoDelJuego = EMPATE;
+        }else{
+            this.resultadoDelJuego = this.tablero.calcularResultadoInt();
+        }
+        if(this.resultadoDelJuego !== 0){
+            console.log('Ha Terminado!! ' + this.resultadoDelJuego);
+            //this.tablero.dibujarTablero();
+            if( !this.tablero.jugadorEsGanador(jugador) && this.estaEntrenando){//perdimos, actualizar tablero
+                this.actualizarProbabilidad( this.ultimoTablero, this.calcularReward(this.tablero, jugador), jugador );
+            }
+        }
     }
     jugarVsRandom(jugador = 1){
         //Jugadas promedio de una partida = 49
@@ -113,9 +141,11 @@ export default class RLAgent{
             if(turno === jugador){
                 q = Math.random();
                 if( q <= this.qRate || !this.estaEntrenando){
-                    haJugado = this.jugar(jugador);
+                    haJugado = this.jugar(jugador); 
+                    //console.log('Agente ha jugado inteligente');
                 }else{
-                    haJugado = this.jugarRandom(jugador, true);
+                    haJugado = this.jugarRandom(jugador, true); 
+                    //console.log('Agente ha jugado random');
                 }
             }else{
                 haJugado = this.jugarRandom(contrario, false);

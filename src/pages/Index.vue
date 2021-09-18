@@ -3,20 +3,29 @@
     <br>
     {{selectedElement}}
     {{movimientosPosibles}}
-    <div v-for="(fila, index) of tabla" :key="index" class="row">
-      <div v-for="(elem, indexElem) of fila" :key="indexElem">
-        <div class="empty-space text-white" :class="(indexElem + index) % 2 ? 'empty-black' : 'empty-red'">
-          <q-btn flat v-if="elem === 1 || elem === 2" 
-            @click="select([index, indexElem], elem !== 1, elem)" class="pawn" 
-            :class="[elem === 1 ? 'black-pawn' : 'white-pawn', { 'selected': index === selectedElement[0] && indexElem === selectedElement[1] }]" />
-          <q-btn flat v-else-if="elem === 8 || elem === 9" 
-            @click="select([index, indexElem], elem !== 8)" class="pawn" 
-            :class="[elem === 8 ? 'black-pawn' : 'white-pawn', { 'selected': index === selectedElement[0] && indexElem === selectedElement[1] }]" />
-          <q-btn flat v-else 
-            @click="selectMovement([index, indexElem])" class="pawn" />
+    <p v-if="estaEntrenado">Estoy entrenando.... >:)</p>
+    <div v-else>
+      <div v-for="(fila, index) of tabla" :key="index" class="row">
+        <div v-for="(elem, indexElem) of fila" :key="indexElem">
+          <div class="empty-space text-white" :class="(indexElem + index) % 2 ? 'empty-black' : 'empty-red'">
+            <q-btn flat v-if="elem === 1 || elem === 2" 
+              @click="select([index, indexElem], elem !== 1, elem)" class="pawn" 
+              :class="[elem === 1 ? 'black-pawn' : 'white-pawn', { 'selected': index === selectedElement[0] && indexElem === selectedElement[1] }]" />
+            <q-btn flat v-else-if="elem === 8 || elem === 9" 
+              @click="select([index, indexElem], elem !== 8)" class="pawn" 
+              :class="[elem === 8 ? 'black-pawn' : 'white-pawn', { 'selected': index === selectedElement[0] && indexElem === selectedElement[1] }]" />
+            <q-btn flat v-else 
+              @click="selectMovement([index, indexElem])" class="pawn" />
+          </div>
         </div>
       </div>
-    </div>
+      <p v-if="juegaAgente" v-bind:style="{textAlign:'center'}">Juega Agente</p>
+      <p v-else v-bind:style="{textAlign:'center'}">Juega random!</p>
+      <p v-if="agenteRl.estaEntrenando">Entrenando...</p>
+      <p v-else>Modo serio...</p>
+      <button @click="sgteJugada()">Siguiente jugada</button>
+      <button @click="cancelarEntrenamiento()">Dejar de entrenar!</button>
+  </div>
   </q-page>
 </template>
 
@@ -30,19 +39,40 @@ export default {
   name: 'Index',
   data() {
     return {
+      estaEntrenado: false,
+      jugadorActual: 2,
       interactive: true,
       selectedElement: [],
       movimientosPosibles: [],
       //codigo a borrar Mati
       imprimir: null,
       agenteRl: null,
+      minimaxPoda: null,
+      tablero: null,
     }
   },
   methods: {
-    select(indexElem, canMove, jugador) {
+    select(indexElem, canMove, jugador = 2) {
       if (!this.interactive || !canMove) return;
       this.selectedElement = indexElem;
       this.movimientosPosibles = this.tablero.getJugadasByFicha(indexElem, jugador);
+    },
+    sgteJugada(){
+      if( this.jugadorActual === 1 ){
+        console.log('Juega Agente');
+        this.agenteRl.jugar(1);
+        //this.tablero.jugarRandom(1);
+      }else{
+        console.log('Juega Minimax');
+        this.minimaxPoda.jugar();
+      }
+      //this.agenteRl.expectarPartidaVsRandom(this.jugadorActual, this.jugadorActual === 1);
+      this.jugadorActual = (this.jugadorActual % 2) + 1;
+    },
+    cancelarEntrenamiento(){
+      this.agenteRl.resetearTablero();
+      this.agenteRl.estaEntrenando = false;
+      this.agenteRl.alpha = 0.6;
     },
     selectMovement(posicion) {
       // console.log('posicion de movimiento:', posicion);
@@ -61,28 +91,39 @@ export default {
       this.interactive = false;
       this.selectedElement = [];
       this.movimientosPosibles = [];
-      const jugada = this.agenteRl.jugar(1);
-      this.interactive = true;
+      //this.agenteRl.tablero.dibujarTablero();
+      setTimeout(()=>{
+        //this.agenteRl.tablero.jugarRandom(1);
+        //this.agenteRl.jugar(1);
+        this.minimaxPoda.jugar();
+        this.interactive = true;
+      }, 400);
+      //this.agenteRl.tablero.dibujarTablero();
     }
   },
   computed: {
     tabla() {
-      return this.agenteRl.tablero ? this.agenteRl.tablero.table : '';
+      return this.tablero ? this.tablero.table : '';
     },
-    tablero(){
-      return this.agenteRl.tablero;
+    juegaAgente(){
+      return this.jugadorActual === 1;
     }
   },
   created() {
     this.tablero = new Tablero();
+    this.agenteRl = new RLAgent(5, this.tablero);
     //código a borrar Mati
-    this.minimaxPoda = new MinimaxPodaAlfaBeta();
-    //codigo a borrar Mati
-    this.minimaxPoda.jugar();
+    
+    //this.minimaxPoda = new MinimaxPodaAlfaBeta(2, this.tablero);
+    this.minimaxPoda = new MinimaxPodaAlfaBeta(1, this.tablero);
 
-    this.agenteRl = new RLAgent(10000);
+    //codigo a borrar Mati
+    // this.minimaxPoda.jugar();
     // const jugada = this.agenteRl.jugar(1);
     //this.agenteRl.tablero.dibujarTablero();
+    //this.agenteRl.entrenarVsRandom();
+    this.agenteRl.estaEntrenado = false;
+    this.agenteRl.alpha = 0.5;
   }
 }
 </script>

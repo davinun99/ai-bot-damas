@@ -5,6 +5,9 @@ class Tablero {
     constructor( table ){
         this.table = table || getInitialTable();
     }
+    resetearTablero(){
+        this.table = getInitialTable();
+    }
     jugadorEsGanador(jugador){
         const resultado = this.calcularResultado();
         return jugador === 1 ? (resultado === GANAN_NEGRAS) : (resultado === GANAN_BLANCAS)
@@ -251,9 +254,9 @@ class Tablero {
             reward = 0;//Si el jugador pierde, damos el peor reward
         }
         else if( this.getTotalPuntos(jugador) > this.getTotalPuntos(contrario) ){
-            reward = 0.7;//Si el jugador consigue mas puntos x pieza, damos un buen reward
+            reward = 0.85;//Si el jugador consigue mas puntos x pieza, damos un buen reward
         }else if( this.getDamasByJugador(jugador) > this.getDamasByJugador(contrario) ){
-            reward = 0.6;//Si el jugador obtiene mas damas, damos un reward
+            reward = 0.7;//Si el jugador obtiene mas damas, damos un reward
         }
         return reward;
     }
