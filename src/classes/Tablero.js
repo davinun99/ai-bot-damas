@@ -5,6 +5,9 @@ class Tablero {
     constructor( table ){
         this.table = table || getInitialTable();
     }
+    resetearTablero(){
+        this.table = getInitialTable();
+    }
     jugadorEsGanador(jugador){
         const resultado = this.calcularResultado();
         return jugador === 1 ? (resultado === GANAN_NEGRAS) : (resultado === GANAN_BLANCAS)

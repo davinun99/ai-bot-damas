@@ -1,19 +1,21 @@
 import Tablero from 'src/classes/Tablero.js';
 import {GANAN_BLANCAS, GANAN_NEGRAS, JUEGO_INCONCLUSO} from '../helpers/constants';
 class MinimaxPodaAlfaBeta {
-    tableroActual = new Tablero();
+    tableroActual = null;
     alfa = -100000; 
     beta = 100000;
-    profundidadMax = 4; //cantidad de niveles del árbol que como máximo bajará
+    profundidadMax = 1; //cantidad de niveles del árbol que como máximo bajará
     jugador = 1; //asumo que jugador es blancas (2)
     rival = 2; //asumo que es negras (1) el rival
     movimientoElegido = {};
 
-    constructor( jugador = 1 ){
+    constructor( jugador = 1, tablero ){
         this.jugador = jugador;
         this.rival = (this.jugador % 2) + 1;
+        this.tableroActual = tablero;
     }
     jugar( ){
+        console.log('Tablero',this.tableroActual);
         if (this.tableroActual.getAllJugadas(this.rival).length === 0) { //si el rival ya no tiene movimientos posibles pierde
             console.log("el rival ha perdido");
         } else if(this.tableroActual.getAllJugadas(this.jugador).length === 0){ //si el jugador ya no tiene movimientos posibles pierde
@@ -21,6 +23,11 @@ class MinimaxPodaAlfaBeta {
         }else{
             this.movimientoElegido = {}; //hacemos vacío el movimiento elegido
             this.maxValue(this.tableroActual,this.profundidadMax,this.alfa,this.beta);
+            
+            let {movimiento, puedeCapturar, fichasCapturadas, ficha} = this.movimientoElegido; //desarmamos el movimiento
+            let [movFila, movColumna] = movimiento; //ver valores del movimiento
+            console.log('mov elegido: ['+movFila+']['+movColumna+']');
+
             this.tableroActual.jugar(this.movimientoElegido); //jugamos con el movimiento elegido que fue cargado en maxValue
         }
     }
