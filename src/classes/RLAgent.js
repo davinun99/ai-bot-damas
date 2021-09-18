@@ -1,5 +1,6 @@
 
 import { EMPATE, JUEGO_INCONCLUSO, JUEGO_NO_INICIADO } from 'src/helpers/constants';
+import MinimaxPodaAlfaBeta from './MinimaxPodaAlfaBeta';
 import Tablero from './Tablero';
 export default class RLAgent{
     lookupTable = {};//Hash map
@@ -128,6 +129,35 @@ export default class RLAgent{
                 this.actualizarProbabilidad( this.ultimoTablero, this.calcularReward(this.tablero, jugador), jugador );
             }
         }
+    }
+    entrenarVsMinimax( jugador, minimaxAgent = new MinimaxPodaAlfaBeta(2, this.tablero) ){
+        for (let i = 0; i < this.N; i++) {
+            this.resetearTablero();
+            this.actualizarAlpha(i);
+            this.jugarVsMinimax(jugador, minimaxAgent);
+            console.log('Entrenando...');
+        }
+        this.resetearTablero();
+    }
+    jugarVsMinimax(jugador = 1, minimaxAgent){
+        let turno = 1;
+        let jugadas = 49;
+        let q = 0;
+        do{
+            let haJugado = false;
+            if(turno === jugador){
+                q = Math.random();
+                if(  q <= this.qRate || !this.estaEntrenando){
+                    haJugado = this.jugar(jugador);
+                }else{
+                    haJugado = this.jugarRandom(jugador, true);
+                }
+            }else{
+                haJugado = minimaxAgent.jugar();
+            }
+            turno = (turno % 2) + 1;
+            jugadas--;
+        }while( jugadas > 0)
     }
     jugarVsRandom(jugador = 1){
         //Jugadas promedio de una partida = 49
