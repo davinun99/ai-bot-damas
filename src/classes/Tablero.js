@@ -76,13 +76,12 @@ class Tablero {
         return resultado;
     }
     calcularResultado(){ //si ya no hay piezas de un jugador osi es que hay el juego sigue
-        //(Mati) añado esta línea para que también cuente como derrota cuando uno de los dos no tiene más movimientos
-        //si te molesta quita sin problemas o cambia @David
-        let ganador = (this.getAllJugadas(2) === 0 ? GANAN_NEGRAS : (this.getAllJugadas(1) === 0 ? GANAN_BLANCAS : JUEGO_INCONCLUSO));
-        //cambié el const por let para lo de abajo
-        ganador = (this.cantFichasNegras === 0 ? GANAN_NEGRAS : (this.cantFichasNegras === 0 ? GANAN_BLANCAS : JUEGO_INCONCLUSO));
-        
-        const esEmpate = this.getAllJugadas(1).length + this.getAllJugadas(2).length === 0;
+        let ganador = (this.cantPiezasBlancas === 0 ? GANAN_NEGRAS : (this.cantPiezasNegras === 0 ? GANAN_BLANCAS : JUEGO_INCONCLUSO));
+        const jugadasNegras = this.getAllJugadas(1);
+        const jugadasBlancas = this.getAllJugadas(2);
+        ganador = ganador === JUEGO_INCONCLUSO && jugadasNegras.length === 0 ? GANAN_BLANCAS : JUEGO_INCONCLUSO;
+        ganador = ganador === JUEGO_INCONCLUSO && jugadasBlancas.length === 0 ? GANAN_NEGRAS : JUEGO_INCONCLUSO;
+        const esEmpate = jugadasNegras.length + jugadasBlancas.length === 0;
         if(ganador!== JUEGO_INCONCLUSO){
             return ganador;
         }else if(esEmpate){
