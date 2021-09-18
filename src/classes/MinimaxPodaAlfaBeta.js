@@ -14,7 +14,7 @@ class MinimaxPodaAlfaBeta {
 
     jugar(){
         let index = 0;
-        while (this.tableroActual.calcularResultado() === JUEGO_INCONCLUSO && index <100) { //limitamos a 200 turnos máximo
+        while (this.tableroActual.calcularResultado() === JUEGO_INCONCLUSO && index <50) { //limitamos a 200 turnos máximo
             index++;
         //for (let index = 0; index < 25; index++) {
             //antes de jugar vemos las jugadas disponibles
@@ -48,6 +48,7 @@ class MinimaxPodaAlfaBeta {
             //}
             //this.tableroActual.calcularResultado();
         }
+        this.tableroActual.dibujarTablero();
     }
 
     //funciones minimax
@@ -61,12 +62,15 @@ class MinimaxPodaAlfaBeta {
         for (let movimiento of tableroActual.getAllJugadas(this.jugador)) { 
             //Jugamos cada movimiento y lo pasamos como parámetro al siguiente nivel del arbol
             tableroSimulado.jugar(movimiento);
-            if (this.minValue(tableroSimulado,profundidadMax-1,alfa,beta) > alfa) {
-                alfa = this.minValue(tableroSimulado,profundidadMax-1,alfa,beta);
+            let posibleMov = this.minValue(tableroSimulado,profundidadMax-1,alfa,beta);
+            if ( posibleMov > alfa ) {
+                alfa = posibleMov;
                 this.movimientoElegido = movimiento; //cargamos el movimiento en la variable global
                 //hacemos lo de movElegido solo en alfa porque alfa son las jugadas de nuestro algoritmo y beta del rival
             }
+            //&& alfa!==-100000 && beta!==100000
             if (alfa >= beta) { //poda
+                console.log('podado');
                 return beta;
             }
         }
@@ -84,10 +88,11 @@ class MinimaxPodaAlfaBeta {
             tableroSimulado.jugar(movimiento);
             beta = this.min(beta,this.maxValue(tableroSimulado,profundidadMax-1,alfa,beta));
             if (alfa >= beta) { //poda
+                console.log('podado');
                 return alfa;
             }
         }
-        //console.log('profundidad: '+(4-profundidadMax)+' valor(beta):'+ beta);
+        console.log('profundidad: '+(4-profundidadMax)+' valor(beta):'+ beta);
         return beta;
     }
 
