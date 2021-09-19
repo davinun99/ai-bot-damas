@@ -10,8 +10,9 @@ export default class RLAgent{
     ultimoTablero = null;//Auxiliar con el ultimo tablero usado
     qRate = 0.2;
     N;
-    constructor( N, tablero ){
+    constructor(jugador, N, tablero){
         this.N = N;
+        this.jugador = jugador;
         this.lookupTable = {};
         this.tablero = tablero;
         this.ultimoTablero = tablero;
@@ -50,11 +51,11 @@ export default class RLAgent{
         const serialTablero = tablero.serializarTablero();
         this.lookupTable[serialTablero] = prob;
     }
-    jugar( jugador ){//jugador= 1 | 2
+    jugar(){//jugador= 1 | 2
         //ELITISTA?
         let jugadaARealizar;
         let prob, maxProb = -1;
-        const jugadas = this.tablero.getAllJugadas(jugador);
+        const jugadas = this.tablero.getAllJugadas(this.jugador);
         if( !jugadas.length ){
             this.resultadoDelJuego = EMPATE;
             return false;
@@ -62,7 +63,7 @@ export default class RLAgent{
         for (const jugada of jugadas) {//recorrer las jugadas posibles
             const copiaTablero = this.tablero.clonarTablero();
             this.tablero.jugar(jugada);
-            prob = this.calcularReward(this.tablero, jugador);
+            prob = this.calcularReward(this.tablero, this.jugador);
             //calcular reward del tablero formado
             if(prob > maxProb){
                 maxProb = prob;//Actualizar maximo reward
@@ -71,7 +72,7 @@ export default class RLAgent{
             this.tablero.table = copiaTablero;
         }
         if(this.estaEntrenando){
-            this.actualizarProbabilidad(this.ultimoTablero, maxProb, jugador);
+            this.actualizarProbabilidad(this.ultimoTablero, maxProb, this.jugador);
         }
         this.tablero.jugar(jugadaARealizar);
         const copiaTablero = this.tablero.clonarTablero();
@@ -97,7 +98,7 @@ export default class RLAgent{
         for (let i = 0; i < this.N; i++) {
             this.resetearTablero();
             this.actualizarAlpha(i);
-            this.jugarVsRandom();
+            this.jugarVsRandom(this.jugador);
             console.log('Entrenando...');
         }
         this.resetearTablero();

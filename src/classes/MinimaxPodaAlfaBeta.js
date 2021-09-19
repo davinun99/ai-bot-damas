@@ -9,10 +9,11 @@ class MinimaxPodaAlfaBeta {
     rival = 2; //asumo que es negras (1) el rival
     movimientoElegido = {};
 
-    constructor( jugador = 1, tablero ){
+    constructor( jugador = 1, N, tablero ){
         this.jugador = jugador;
         this.rival = (this.jugador % 2) + 1;
         this.tableroActual = tablero;
+        this.profundidadMax = N || 1;
     }
     jugar( ){
         console.log('Tablero',this.tableroActual);
