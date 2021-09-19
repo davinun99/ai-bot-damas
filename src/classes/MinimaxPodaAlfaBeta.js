@@ -70,12 +70,11 @@ class MinimaxPodaAlfaBeta {
     //funciones minimax
     maxValue(tableroActual,profundidadMax,alfa,beta){ //función max de minimax
         //tablero que simulará la jugada y la pasará al siguiente elemento
-        let tableroSimulado = new Tablero(tableroActual.table);
-        console.log(tableroSimulado.calcularResultado());
-        if (profundidadMax <=0 || tableroSimulado.calcularResultado() !== JUEGO_INCONCLUSO){
+        if (profundidadMax <=0 || tableroActual.calcularResultado() !== JUEGO_INCONCLUSO){
             //cutOff Test: Si ya se llegó al valor de corte o si la partida ya termina
             return this.rewardJugada(tableroActual);
         }
+        let tableroSimulado = new Tablero(tableroActual.table);
         
         let movElegido = [];
         for (let movimiento of tableroActual.getAllJugadas(this.jugador)) { 
@@ -129,16 +128,30 @@ class MinimaxPodaAlfaBeta {
             }
         } else if(tableroActual.calcularResultado() === GANAN_NEGRAS) { //si ganan las negras
             if (this.jugador === 1) { //si el jugador es negras entonces gana
-                reward = 100;
+                reward = 20202;
             } else { //pierde
-                reward = -100;
+                reward = -20202;
             } 
         } else{ //si la partida aún no termina
-            //FALTA EL REWARD DE TENER MÁS PIEZAS HACIA LOS LATERALES Y EL DE TENER MÁS PIEZAS CUBRIENDOSE
             if (this.jugador === 2) { //si el jugador es blanco
-                reward = this.rewardPiezasBlancas(tableroActual);
+                reward = this.rewardPiezasBlancas(tableroActual); //cantidad de blancas
+
             } else { //si el jugador es negro
-                reward = this.rewardPiezasNegras(tableroActual);
+                reward = this.rewardPiezasNegras(tableroActual); //cantidad de negras
+            }
+            var rewardPosJugador = 0;
+            for (let posicion of tableroActual.getFichas(this.jugador)) { //calcular recompensa de cada posición
+                rewardPosJugador += this.rewardPosicion(posicion);
+            }
+            var rewardPosRival = 0;
+            for (let posicion of tableroActual.getFichas(this.rival)) { //restamos la recompensa de cada posición del rival
+                rewardPosRival+= this.rewardPosicion(posicion);
+            }
+            //sacamos un promedio de puntajes de las posiciones y las restamos entre sí
+            if (this.jugador == 2) { //si el jugador es blancas
+                reward += (rewardPosJugador/tableroActual.cantFichasBlancas)-(rewardPosRival/tableroActual.cantFichasNegras);
+            }else{ //si el jugador es negras
+                reward += (rewardPosJugador/tableroActual.cantFichasNegras)-(rewardPosRival/tableroActual.cantFichasBlancas);
             }
             //reward += this.rewardPosBordes() +this.rewardCubrirAliado() +this.soplo();
         }
@@ -148,13 +161,22 @@ class MinimaxPodaAlfaBeta {
     //subrutinas reward
         //asignaremos el mismo valor a comer que a coronar
     rewardPiezasBlancas(tableroActual){
-        return 2*(tableroActual.cantPeonesBlancos - tableroActual.cantPeonesNegros) +
-        (tableroActual.cantDamasBlancas-tableroActual.cantDamasNegras);
+        return 100*(tableroActual.cantPeonesBlancos - tableroActual.cantPeonesNegros) +
+        10*(tableroActual.cantDamasBlancas-tableroActual.cantDamasNegras);
     }
 
     rewardPiezasNegras(tableroActual){
-        return 2*(tableroActual.cantPeonesNegros - tableroActual.cantPeonesBlancos) +
-        (tableroActual.cantDamasNegras-tableroActual.cantDamasBlancas);
+        return 100*(tableroActual.cantPeonesNegros - tableroActual.cantPeonesBlancos) +
+        10*(tableroActual.cantDamasNegras-tableroActual.cantDamasBlancas);
+    }
+    
+    rewardPosicion(x , y) {
+        if (x == 0 || x == 7 || y == 0 || y == 7){
+            return 5;
+        }
+        else {
+            return 3;
+        }
     }
 
     //funciones extra
