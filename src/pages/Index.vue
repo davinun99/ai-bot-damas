@@ -1,10 +1,53 @@
 <template>
   <q-page class="flex flex-center column">
-    <br>
-    {{selectedElement}}
-    {{movimientosPosibles}}
-    <p v-if="estaEntrenado">Estoy entrenando.... >:)</p>
-    <div v-else>
+    
+    <!-- HEADER -->
+
+    <div class="row q-my-md">
+      <q-btn-dropdown color="primary" :label="blancasJueganCon">
+        <q-input class="q-ma-md" v-model="blancaN" label="N" />
+        <q-separator />
+        <q-list>
+          <q-item v-for="juego of blancaJuegos" :key="juego" clickable v-close-popup @click="jugarCon(2, juego)">
+            <q-item-section>
+              <q-item-label>{{juego}}</q-item-label>
+            </q-item-section>
+          </q-item>
+        </q-list>
+      </q-btn-dropdown>
+
+      <div class="q-ma-md text-grey-8">VS.</div>
+
+      <q-btn-dropdown color="primary" :label="negrasJueganCon">
+        <q-input class="q-ma-md" v-model="negraN" label="N" />
+        <q-separator />
+        <q-list>
+          <q-item v-for="juego of negraJuegos" :key="juego" clickable v-close-popup @click="jugarCon(1, juego)">
+            <q-item-section>
+              <q-item-label>{{juego}}</q-item-label>
+            </q-item-section>
+          </q-item>
+        </q-list>
+      </q-btn-dropdown>
+
+      <div class="q-ma-md text-grey-8">|</div>
+
+      <q-btn v-if="!started" color="primary" @click="empezarPartida">
+        <div class="q-mr-md">Empezar</div>
+        <q-icon name="arrow_forward"></q-icon>
+      </q-btn>
+      <q-btn v-else color="negative" @click="terminarPartida">
+        <div class="q-mr-md">Terminar</div>
+        <q-icon name="close"></q-icon>
+      </q-btn>
+    </div>
+
+    <!-- TABLE -->
+    
+    <div v-if="entrenandoNegras || entrenandoBlancas">
+      Entrenando...
+    </div>
+    <div v-else-if="started">
       <div v-for="(fila, index) of tabla" :key="index" class="row">
         <div v-for="(elem, indexElem) of fila" :key="indexElem">
           <div class="empty-space text-white" :class="(indexElem + index) % 2 ? 'empty-black' : 'empty-red'">
@@ -19,13 +62,13 @@
           </div>
         </div>
       </div>
-      <p v-if="juegaAgente" v-bind:style="{textAlign:'center'}">Juega Agente</p>
+      <!--<p v-if="juegaAgente" v-bind:style="{textAlign:'center'}">Juega Agente</p>
       <p v-else v-bind:style="{textAlign:'center'}">Juega random!</p>
       <p v-if="agenteRl.estaEntrenando">Entrenando...</p>
       <p v-else>Modo serio...</p>
       <button @click="sgteJugada()">Siguiente jugada</button>
-      <button @click="cancelarEntrenamiento()">Dejar de entrenar!</button>
-  </div>
+      <button @click="cancelarEntrenamiento()">Dejar de entrenar!</button>-->
+    </div>
   </q-page>
 </template>
 
@@ -34,12 +77,15 @@ import Tablero from 'src/classes/Tablero.js';
 //código a borrar Mati
 import MinimaxPodaAlfaBeta from 'src/classes/MinimaxPodaAlfaBeta.js';
 
+const blancaJuegos = ['Humano', 'Aprendizaje Reforzado', 'Minimax', 'Minimax con poda alfa-beta'];
+const negraJuegos = ['Aprendizaje Reforzado', 'Minimax', 'Minimax con poda alfa-beta'];
+
 import RLAgent from 'src/classes/RLAgent.js';
 export default {
   name: 'Index',
   data() {
     return {
-      estaEntrenado: false,
+      started: false,
       jugadorActual: 2,
       interactive: true,
       selectedElement: [],
@@ -49,18 +95,87 @@ export default {
       agenteRl: null,
       minimaxPoda: null,
       tablero: null,
+
+      entrenandoBlancas: false,
+      entrenandoNegras: false,
+      blancaJuegos,
+      negraJuegos,
+      blancasJueganCon: blancaJuegos[0],
+      negrasJueganCon: negraJuegos[0],
+      negraN: 1,
+      blancaN: 1,
+      jugadorNegro: null,
+      jugadorBlanco: null,
     }
   },
   methods: {
+    empezarPartida() {
+      //
+      // Inicializar piezas negras
+      //
+      if (this.negrasJueganCon === negraJuegos[0]) { // RL
+      this.entrenandoNegras = true;
+        this.jugadorNegro = new RLAgent(1, this.negraN, this.tablero);
+        this.jugadorNegro.entrenarVsRandom()
+        this.entrenandoNegras = false;
+      } else if (this.negrasJueganCon === negraJuegos[1]) { // MimiMax
+        
+      } else if (this.negrasJueganCon === negraJuegos[2]) { // MimiMax con poda alfa-beta
+        this.jugadorNegro = new MinimaxPodaAlfaBeta(1, this.negraN, this.tablero);
+      }
+      //
+      // Inicializar piezas blancas
+      //
+      if (this.blancasJueganCon === blancaJuegos[1]) { // RL
+        this.entrenandoBlancas = true;
+        this.jugadorBlanco = new RLAgent(2, this.blancaN, this.tablero);
+        this.jugadorBlanco.entrenarVsRandom()
+        this.entrenandoBlancas = false;
+      } else if (this.blancasJueganCon === blancaJuegos[2]) { // MimiMax
+        
+      } else if (this.blancasJueganCon === blancaJuegos[3]) { // MimiMax con poda alfa-beta
+        this.jugadorBlanco = new MinimaxPodaAlfaBeta(2, this.blancaN, this.tablero);
+      }
+      //
+      // Empezar
+      //
+      this.started = true;
+      //
+      // JUGAR MAQUINA VS MAQUINA
+      //
+      if (this.blancasJueganCon !== blancaJuegos[0]) {
+        this.jugarMaquinas();
+      }
+    },
+    jugarMaquinas() {
+      if (!this.started) return;
+      this.jugadorBlanco.jugar();
+      setTimeout(() => {
+        if (!this.started) return;
+        this.jugadorNegro.jugar();
+        setTimeout(() => {
+          if (!this.started) return;
+          this.jugarMaquinas();
+        }, 500);
+      }, 500);
+    },
+    terminarPartida() {
+      this.tablero.resetearTablero();
+      this.started = false;
+    },
+    jugarCon(jugador, juego) {
+      if (jugador === 1) this.negrasJueganCon = juego; 
+      else if (jugador === 2) this.blancasJueganCon = juego; 
+    },
     select(indexElem, canMove, jugador = 2) {
-      if (!this.interactive || !canMove) return;
+      if (!this.interactive || !canMove || this.blancasJueganCon !== blancaJuegos[0]) return;
       this.selectedElement = indexElem;
       this.movimientosPosibles = this.tablero.getJugadasByFicha(indexElem, jugador);
     },
     sgteJugada(){
       if( this.jugadorActual === 1 ){
         console.log('Juega Agente');
-        this.agenteRl.jugar(1);
+        this.agenteRl.jugar();
         //this.tablero.jugarRandom(1);
       }else{
         console.log('Juega Minimax');
@@ -95,7 +210,8 @@ export default {
       setTimeout(()=>{
         //this.agenteRl.tablero.jugarRandom(1);
         //this.agenteRl.jugar(1);
-        this.minimaxPoda.jugar();
+        // this.minimaxPoda.jugar();
+        this.jugadorNegro.jugar();
         this.interactive = true;
       }, 400);
       //this.agenteRl.tablero.dibujarTablero();
@@ -111,19 +227,19 @@ export default {
   },
   created() {
     this.tablero = new Tablero();
-    this.agenteRl = new RLAgent(5, this.tablero);
+    // this.agenteRl = new RLAgent(5, this.tablero);
     //código a borrar Mati
     
     //this.minimaxPoda = new MinimaxPodaAlfaBeta(2, this.tablero);
-    this.minimaxPoda = new MinimaxPodaAlfaBeta(1, this.tablero);
+    // this.minimaxPoda = new MinimaxPodaAlfaBeta(1, this.tablero);
 
     //codigo a borrar Mati
     // this.minimaxPoda.jugar();
     // const jugada = this.agenteRl.jugar(1);
     //this.agenteRl.tablero.dibujarTablero();
     //this.agenteRl.entrenarVsRandom();
-    this.agenteRl.estaEntrenado = false;
-    this.agenteRl.alpha = 0.5;
+    //this.agenteRl.estaEntrenado = false;
+    //this.agenteRl.alpha = 0.5;
   }
 }
 </script>
