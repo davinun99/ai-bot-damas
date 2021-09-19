@@ -33,7 +33,7 @@ class MinimaxPodaAlfaBeta {
     }
     jugarVsRandom(){
         let index = 0;
-        while (this.tableroActual.calcularResultado() === JUEGO_INCONCLUSO && index <50) { //limitamos a 200 turnos máximo
+        while (this.tableroActual.calcularResultado() === JUEGO_INCONCLUSO && index <100) { //limitamos a 200 turnos máximo
             index++;
             if (this.tableroActual.getAllJugadas(this.rival).length === 0) { //si el rival ya no tiene movimientos posibles pierde
                 console.log("el rival ha perdido");
@@ -70,26 +70,31 @@ class MinimaxPodaAlfaBeta {
     maxValue(tableroActual,profundidadMax,alfa,beta){ //función max de minimax
         //tablero que simulará la jugada y la pasará al siguiente elemento
         let tableroSimulado = new Tablero(tableroActual.table);
-        if (profundidadMax <=0 || tableroActual.calcularResultado() !== JUEGO_INCONCLUSO){ 
+        console.log(tableroSimulado.calcularResultado());
+        if (profundidadMax <=0 || tableroSimulado.calcularResultado() !== JUEGO_INCONCLUSO){
             //cutOff Test: Si ya se llegó al valor de corte o si la partida ya termina
             return this.rewardJugada(tableroActual);
         }
+        
+        let movElegido = [];
         for (let movimiento of tableroActual.getAllJugadas(this.jugador)) { 
             //Jugamos cada movimiento y lo pasamos como parámetro al siguiente nivel del arbol
             tableroSimulado.jugar(movimiento);
             let posibleMov = this.minValue(tableroSimulado,profundidadMax-1,alfa,beta);
             if ( posibleMov > alfa ) {
                 alfa = posibleMov;
-                this.movimientoElegido = movimiento; //cargamos el movimiento en la variable global
+                movElegido = movimiento; //cargamos el movimiento en la variable global
                 //hacemos lo de movElegido solo en alfa porque alfa son las jugadas de nuestro algoritmo y beta del rival
             }
             //&& alfa!==-100000 && beta!==100000
+            this.movimientoElegido = movElegido;
             if (alfa >= beta) { //poda
-                console.log('podado');
-                return beta;
+                console.log('['+this.jugador+']profundidad: '+(4-profundidadMax)+' podado');
+                //return beta;
+                break;
             }
         }
-        console.log('profundidad: '+(4-profundidadMax)+' valor(alfa):'+ alfa);
+        console.log('['+this.jugador+']profundidad: '+(4-profundidadMax)+' valor(alfa):'+ alfa);
         return alfa;
     }
 
@@ -103,11 +108,12 @@ class MinimaxPodaAlfaBeta {
             tableroSimulado.jugar(movimiento);
             beta = this.min(beta,this.maxValue(tableroSimulado,profundidadMax-1,alfa,beta));
             if (alfa >= beta) { //poda
-                console.log('podado');
-                return alfa;
+                console.log('['+this.jugador+']profundidad: '+(4-profundidadMax)+' podado');
+                //return alfa;
+                break;
             }
         }
-        console.log('profundidad: '+(4-profundidadMax)+' valor(beta):'+ beta);
+        console.log('['+this.jugador+']profundidad: '+(4-profundidadMax)+' valor(beta):'+ beta);
         return beta;
     }
 
@@ -141,12 +147,12 @@ class MinimaxPodaAlfaBeta {
     //subrutinas reward
         //asignaremos el mismo valor a comer que a coronar
     rewardPiezasBlancas(tableroActual){
-        return (tableroActual.cantPeonesBlancos - tableroActual.cantPeonesNegros) +
+        return 2*(tableroActual.cantPeonesBlancos - tableroActual.cantPeonesNegros) +
         (tableroActual.cantDamasBlancas-tableroActual.cantDamasNegras);
     }
 
     rewardPiezasNegras(tableroActual){
-        return (tableroActual.cantPeonesNegros - tableroActual.cantPeonesBlancos) +
+        return 2*(tableroActual.cantPeonesNegros - tableroActual.cantPeonesBlancos) +
         (tableroActual.cantDamasNegras-tableroActual.cantDamasBlancas);
     }
 

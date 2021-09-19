@@ -19,10 +19,10 @@
           </div>
         </div>
       </div>
-      <p v-if="juegaAgente" v-bind:style="{textAlign:'center'}">Juega Agente</p>
-      <p v-else v-bind:style="{textAlign:'center'}">Juega random!</p>
-      <p v-if="agenteRl.estaEntrenando">Entrenando...</p>
-      <p v-else>Modo serio...</p>
+      <p v-if="juegaAgente" v-bind:style="{textAlign:'center'}">Juega IA</p>
+      <p v-else v-bind:style="{textAlign:'center'}">Juega rival!</p>
+      <!-- <p v-if="agenteRl.estaEntrenando">Entrenando...</p> -->
+      <!-- <p v-else>Modo serio...</p> -->
       <button @click="sgteJugada()">Siguiente jugada</button>
       <button @click="cancelarEntrenamiento()">Dejar de entrenar!</button>
   </div>
@@ -49,6 +49,7 @@ export default {
       agenteRl: null,
       minimaxPoda: null,
       tablero: null,
+      minimaxPodaRival: null,
     }
   },
   methods: {
@@ -59,9 +60,10 @@ export default {
     },
     sgteJugada(){
       if( this.jugadorActual === 1 ){
-        console.log('Juega Agente');
-        this.agenteRl.jugar(1);
-        //this.tablero.jugarRandom(1);
+        console.log('Juega Rival');
+        //this.agenteRl.jugar(1);
+        //this.tablero.jugarRandom(2);
+        this.minimaxPodaRival.jugar();
       }else{
         console.log('Juega Minimax');
         this.minimaxPoda.jugar();
@@ -116,9 +118,9 @@ export default {
     
     //this.minimaxPoda = new MinimaxPodaAlfaBeta(2, this.tablero);
     this.minimaxPoda = new MinimaxPodaAlfaBeta(1, this.tablero);
-
+    this.minimaxPodaRival = new MinimaxPodaAlfaBeta(2, this.tablero);
     //codigo a borrar Mati
-    // this.minimaxPoda.jugar();
+    //this.minimaxPoda.jugarVsRandom();
     // const jugada = this.agenteRl.jugar(1);
     //this.agenteRl.tablero.dibujarTablero();
     //this.agenteRl.entrenarVsRandom();
