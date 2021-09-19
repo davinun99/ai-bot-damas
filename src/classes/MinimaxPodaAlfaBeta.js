@@ -69,48 +69,53 @@ class MinimaxPodaAlfaBeta {
 
     //funciones minimax
     maxValue(tableroActual,profundidadMax,alfa,beta){ //función max de minimax
+        let tableroSimulado = new Tablero();
         //tablero que simulará la jugada y la pasará al siguiente elemento
         if (profundidadMax <=0 || tableroActual.calcularResultado() !== JUEGO_INCONCLUSO){
             //cutOff Test: Si ya se llegó al valor de corte o si la partida ya termina
             return this.rewardJugada(tableroActual);
         }
-        let tableroSimulado = new Tablero(tableroActual.table);
-        
         let movElegido = [];
         for (let movimiento of tableroActual.getAllJugadas(this.jugador)) { 
+            tableroSimulado.table = tableroActual.clonarTablero();
             //Jugamos cada movimiento y lo pasamos como parámetro al siguiente nivel del arbol
             tableroSimulado.jugar(movimiento);
             let posibleMov = this.minValue(tableroSimulado,profundidadMax-1,alfa,beta);
-            if ( posibleMov > alfa ) {
-                alfa = posibleMov;
-                movElegido = movimiento; //cargamos el movimiento en la variable global
-                //hacemos lo de movElegido solo en alfa porque alfa son las jugadas de nuestro algoritmo y beta del rival
-            }
-            //&& alfa!==-100000 && beta!==100000
-            this.movimientoElegido = movElegido;
-            if (alfa >= beta) { //poda
+
+            if (posibleMov >= beta) { //poda
                 console.log('['+this.jugador+']profundidad: '+(4-profundidadMax)+' podado');
                 //return beta;
                 break;
             }
+            if ( posibleMov >= alfa ) {
+                alfa = posibleMov;
+                movElegido = movimiento; //cargamos el movimiento en la variable global
+                //hacemos lo de movElegido solo en alfa porque alfa son las jugadas de nuestro algoritmo y beta del rival
+            }
+            
+            this.movimientoElegido = movElegido;
         }
-        console.log('['+this.jugador+']profundidad: '+(4-profundidadMax)+' valor(alfa):'+ alfa);
+        console.log('['+this.jugador+']profundidad: '+(4-profundidadMax)+' valor(alfa):'+ alfa+ ' mov: '+JSON.stringify(movElegido));
         return alfa;
     }
 
 
     minValue(tableroActual,profundidadMax,alfa,beta){ //función min de minimax
-        let tableroSimulado = new Tablero(tableroActual.table);
-        if (profundidadMax <=0  || tableroActual.calcularResultado() != JUEGO_INCONCLUSO){ //cutOff Test
+        let tableroSimulado = new Tablero();
+        if (profundidadMax <=0  || tableroActual.calcularResultado() !== JUEGO_INCONCLUSO){ //cutOff Test
             return this.rewardJugada(tableroActual);
         }
-        for (let movimiento of tableroActual.getAllJugadas(this.rival)) { 
+        for (let movimiento of tableroActual.getAllJugadas(this.rival)) {  
+            tableroSimulado.table = tableroActual.clonarTablero();
             tableroSimulado.jugar(movimiento);
-            beta = this.min(beta,this.maxValue(tableroSimulado,profundidadMax-1,alfa,beta));
-            if (alfa >= beta) { //poda
+            let posibleMov = this.maxValue(tableroSimulado,profundidadMax-1,alfa,beta);
+            if (alfa >= posibleMov) { //poda
                 console.log('['+this.jugador+']profundidad: '+(4-profundidadMax)+' podado');
                 //return alfa;
                 break;
+            }
+            if (posibleMov < beta) {
+                beta = posibleMov;
             }
         }
         console.log('['+this.jugador+']profundidad: '+(4-profundidadMax)+' valor(beta):'+ beta);
@@ -122,9 +127,9 @@ class MinimaxPodaAlfaBeta {
         let reward = 0;
         if (tableroActual.calcularResultado() === GANAN_BLANCAS) { //si ganan las blancas
             if (this.jugador === 2) { //si el jugador es blancas entonces gana
-                reward = 100;
+                reward = 20202;
             } else { //pierde
-                reward = -100;
+                reward = -20202;
             }
         } else if(tableroActual.calcularResultado() === GANAN_NEGRAS) { //si ganan las negras
             if (this.jugador === 1) { //si el jugador es negras entonces gana
@@ -139,20 +144,20 @@ class MinimaxPodaAlfaBeta {
             } else { //si el jugador es negro
                 reward = this.rewardPiezasNegras(tableroActual); //cantidad de negras
             }
-            var rewardPosJugador = 0;
-            for (let posicion of tableroActual.getFichas(this.jugador)) { //calcular recompensa de cada posición
-                rewardPosJugador += this.rewardPosicion(posicion);
-            }
-            var rewardPosRival = 0;
-            for (let posicion of tableroActual.getFichas(this.rival)) { //restamos la recompensa de cada posición del rival
-                rewardPosRival+= this.rewardPosicion(posicion);
-            }
-            //sacamos un promedio de puntajes de las posiciones y las restamos entre sí
-            if (this.jugador == 2) { //si el jugador es blancas
-                reward += (rewardPosJugador/tableroActual.cantFichasBlancas)-(rewardPosRival/tableroActual.cantFichasNegras);
-            }else{ //si el jugador es negras
-                reward += (rewardPosJugador/tableroActual.cantFichasNegras)-(rewardPosRival/tableroActual.cantFichasBlancas);
-            }
+            // var rewardPosJugador = 0;
+            // for (let posicion of tableroActual.getFichas(this.jugador)) { //calcular recompensa de cada posición
+            //     rewardPosJugador += this.rewardPosicion(posicion);
+            // }
+            // var rewardPosRival = 0;
+            // for (let posicion of tableroActual.getFichas(this.rival)) { //restamos la recompensa de cada posición del rival
+            //     rewardPosRival+= this.rewardPosicion(posicion);
+            // }
+            // //sacamos un promedio de puntajes de las posiciones y las restamos entre sí
+            // if (this.jugador == 2) { //si el jugador es blancas
+            //     reward += (rewardPosJugador/tableroActual.cantFichasBlancas)-(rewardPosRival/tableroActual.cantFichasNegras);
+            // }else{ //si el jugador es negras
+            //     reward += (rewardPosJugador/tableroActual.cantFichasNegras)-(rewardPosRival/tableroActual.cantFichasBlancas);
+            // }
             //reward += this.rewardPosBordes() +this.rewardCubrirAliado() +this.soplo();
         }
         return reward;
@@ -170,14 +175,14 @@ class MinimaxPodaAlfaBeta {
         10*(tableroActual.cantDamasNegras-tableroActual.cantDamasBlancas);
     }
     
-    rewardPosicion(x , y) {
-        if (x == 0 || x == 7 || y == 0 || y == 7){
-            return 5;
-        }
-        else {
-            return 3;
-        }
-    }
+    // rewardPosicion(x , y) {
+    //     if (x == 0 || x == 7 || y == 0 || y == 7){
+    //         return 5;
+    //     }
+    //     else {
+    //         return 3;
+    //     }
+    // }
 
     //funciones extra
     max(a,b){
