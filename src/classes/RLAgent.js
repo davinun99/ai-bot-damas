@@ -134,7 +134,8 @@ export default class RLAgent{
             if(turno === jugador){
                 haJugado = this.jugar(jugador);
             }else{
-                haJugado = minimaxAgent.jugar();
+                haJugado = true;
+                minimaxAgent.jugar();
             }
             if(!haJugado){
                 this.resultadoDelJuego = 3;
