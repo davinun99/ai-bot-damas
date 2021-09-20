@@ -60,6 +60,9 @@ export default class RLAgent{
             this.resultadoDelJuego = EMPATE;
             return false;
         }
+        if(this.estaEntrenando && Math.random() > this.qRate){
+            return this.jugarRandom(this.jugador, true);
+        }
         for (const jugada of jugadas) {//recorrer las jugadas posibles
             const copiaTablero = this.tablero.clonarTablero();
             this.tablero.jugar(jugada);
@@ -135,24 +138,16 @@ export default class RLAgent{
         //https://boardgames.stackexchange.com/questions/34659/how-many-turns-does-an-average-game-of-checkers-draughts-go-for
         const contrario = (jugador % 2) + 1;
         let turno = 1;
-        let jugadas = 49;
-        let q = 0;
+        let jugadas = 60;
         do{
             let haJugado = false;
             if(turno === jugador){
-                q = Math.random();
-                if( q <= this.qRate || !this.estaEntrenando){
-                    haJugado = this.jugar(jugador); 
-                    //console.log('Agente ha jugado inteligente');
-                }else{
-                    haJugado = this.jugarRandom(jugador, true); 
-                    //console.log('Agente ha jugado random');
-                }
+                haJugado = this.jugar(jugador); 
             }else{
                 haJugado = this.jugarRandom(contrario, false);
             }
             if(!haJugado){
-                this.resultadoDelJuego = EMPATE;
+                this.resultadoDelJuego = 3;
             }else{
                 this.resultadoDelJuego = this.tablero.calcularResultadoInt();
             }
