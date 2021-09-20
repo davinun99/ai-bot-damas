@@ -117,7 +117,7 @@ export default {
       if (this.negrasJueganCon === negraJuegos[0]) { // RL
       this.entrenandoNegras = true;
         this.jugadorNegro = new RLAgent(1, this.negraN, this.tablero);
-        this.jugadorNegro.entrenarVsRandom()
+        this.jugadorNegro.entrenar();
         this.entrenandoNegras = false;
       } else if (this.negrasJueganCon === negraJuegos[1]) { // MimiMax
         
@@ -130,7 +130,7 @@ export default {
       if (this.blancasJueganCon === blancaJuegos[1]) { // RL
         this.entrenandoBlancas = true;
         this.jugadorBlanco = new RLAgent(2, this.blancaN, this.tablero);
-        this.jugadorBlanco.entrenarVsRandom()
+        this.jugadorBlanco.entrenar(); 
         this.entrenandoBlancas = false;
       } else if (this.blancasJueganCon === blancaJuegos[2]) { // MimiMax
         
@@ -176,14 +176,12 @@ export default {
     sgteJugada(){
       if( this.jugadorActual === 1 ){
         console.log('Juega Rival');
-        //this.agenteRl.jugar(1);
-        //this.tablero.jugarRandom(2);
+        
         this.minimaxPodaRival.jugar();
       }else{
         console.log('Juega Minimax');
         this.minimaxPoda.jugar();
       }
-      //this.agenteRl.expectarPartidaVsRandom(this.jugadorActual, this.jugadorActual === 1);
       this.jugadorActual = (this.jugadorActual % 2) + 1;
     },
     cancelarEntrenamiento(){
@@ -192,8 +190,7 @@ export default {
       this.agenteRl.alpha = 0.6;
     },
     selectMovement(posicion) {
-      // console.log('posicion de movimiento:', posicion);
-      // console.log('this.movimientosPosibles', this.movimientosPosibles);
+      
       if (!this.selectedElement) return;
       for (let movimientoPosible of this.movimientosPosibles) {
         if (movimientoPosible.movimiento[0] === posicion[0] && 
@@ -208,15 +205,11 @@ export default {
       this.interactive = false;
       this.selectedElement = [];
       this.movimientosPosibles = [];
-      //this.agenteRl.tablero.dibujarTablero();
+      
       setTimeout(()=>{
-        //this.agenteRl.tablero.jugarRandom(1);
-        //this.agenteRl.jugar(1);
-        // this.minimaxPoda.jugar();
         this.jugadorNegro.jugar();
         this.interactive = true;
       }, 400);
-      //this.agenteRl.tablero.dibujarTablero();
     }
   },
   computed: {
@@ -229,19 +222,9 @@ export default {
   },
   created() {
     this.tablero = new Tablero();
-    // this.agenteRl = new RLAgent(5, this.tablero);
-    //código a borrar Mati
     
-    //this.minimaxPoda = new MinimaxPodaAlfaBeta(2, this.tablero);
     this.minimaxPoda = new MinimaxPodaAlfaBeta(1, this.tablero);
     this.minimaxPodaRival = new MinimaxPodaAlfaBeta(2, this.tablero);
-    //codigo a borrar Mati
-    //this.minimaxPoda.jugarVsRandom();
-    // const jugada = this.agenteRl.jugar(1);
-    //this.agenteRl.tablero.dibujarTablero();
-    //this.agenteRl.entrenarVsRandom();
-    //this.agenteRl.estaEntrenado = false;
-    //this.agenteRl.alpha = 0.5;
   }
 }
 </script>
