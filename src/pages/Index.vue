@@ -74,8 +74,8 @@
 
 <script>
 import Tablero from 'src/classes/Tablero.js';
-//código a borrar Mati
 import MinimaxPodaAlfaBeta from 'src/classes/MinimaxPodaAlfaBeta.js';
+import Minimax from 'src/classes/Minimax.js';
 
 const blancaJuegos = ['Humano', 'Aprendizaje Reforzado', 'Minimax', 'Minimax con poda alfa-beta'];
 const negraJuegos = ['Aprendizaje Reforzado', 'Minimax', 'Minimax con poda alfa-beta'];
@@ -121,7 +121,7 @@ export default {
         this.jugadorNegro.estaEntrenando = false;
         this.entrenandoNegras = false;
       } else if (this.negrasJueganCon === negraJuegos[1]) { // MimiMax
-        
+        this.jugadorNegro = new Minimax(1, this.negraN, this.tablero);
       } else if (this.negrasJueganCon === negraJuegos[2]) { // MimiMax con poda alfa-beta
         this.jugadorNegro = new MinimaxPodaAlfaBeta(1, this.negraN, this.tablero);
       }
@@ -135,7 +135,7 @@ export default {
         this.jugadorBlanco.estaEntrenando = false;
         this.entrenandoBlancas = false;
       } else if (this.blancasJueganCon === blancaJuegos[2]) { // MimiMax
-        
+        this.jugadorBlanco = new Minimax(2, this.blancaN, this.tablero);
       } else if (this.blancasJueganCon === blancaJuegos[3]) { // MimiMax con poda alfa-beta
         this.jugadorBlanco = new MinimaxPodaAlfaBeta(2, this.blancaN, this.tablero);
       }
