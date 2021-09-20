@@ -62,10 +62,13 @@ class Tablero {
     }
     calcularResultadoInt(){
         let resultado = 0;
-        const esEmpate = this.getAllJugadas(1).length + this.getAllJugadas(2).length === 0;
-        if(this.cantFichasNegras === 0){
+        const jugadasNegras = this.getAllJugadas(1);
+        const jugadasBlancas = this.getAllJugadas(2);
+        const esEmpate = (jugadasNegras.length + jugadasBlancas.length) === 0;
+
+        if( this.cantFichasNegras === 0 || jugadasNegras.length === 0){
             resultado = 2;//2 GANAN BLANCAS
-        }else if(this.cantFichasBlancas === 0){
+        }else if(this.cantFichasBlancas === 0 || jugadasBlancas.length === 0){
             resultado = 1; //1 GANAN NEGRAS
         }else if(esEmpate){
             resultado = 3;//EMPATE
