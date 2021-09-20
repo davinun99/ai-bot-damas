@@ -117,7 +117,7 @@ export default class RLAgent{
         const contrario = jugador % 2 + 1;
         console.log('entrenarVsMinimax')
         if(!minimaxAgent){
-            minimaxAgent = new MinimaxPodaAlfaBeta(contrario, 1, this.tablero)
+            minimaxAgent = new MinimaxPodaAlfaBeta(contrario, 2, this.tablero)
         }
         for (let i = 0; i < n; i++) {
             this.resetearTablero();

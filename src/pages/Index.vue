@@ -118,6 +118,7 @@ export default {
       this.entrenandoNegras = true;
         this.jugadorNegro = new RLAgent(1, this.negraN, this.tablero);
         this.jugadorNegro.entrenar();
+        this.jugadorNegro.estaEntrenando = false;
         this.entrenandoNegras = false;
       } else if (this.negrasJueganCon === negraJuegos[1]) { // MimiMax
         
@@ -131,6 +132,7 @@ export default {
         this.entrenandoBlancas = true;
         this.jugadorBlanco = new RLAgent(2, this.blancaN, this.tablero);
         this.jugadorBlanco.entrenar(); 
+        this.jugadorBlanco.estaEntrenando = false;
         this.entrenandoBlancas = false;
       } else if (this.blancasJueganCon === blancaJuegos[2]) { // MimiMax
         
