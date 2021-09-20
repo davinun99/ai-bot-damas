@@ -1,12 +1,12 @@
 
-import { EMPATE, JUEGO_INCONCLUSO, JUEGO_NO_INICIADO } from 'src/helpers/constants';
+import MinimaxPodaAlfaBeta from './MinimaxPodaAlfaBeta';
 import Tablero from './Tablero';
 export default class RLAgent{
     lookupTable = {};//Hash map
     tablero = null;//Tablero actual
     alpha = 0.0;
     estaEntrenando = true;//Parametro para actualizar o no la tabla
-    resultadoDelJuego = JUEGO_NO_INICIADO;
+    resultadoDelJuego = 0;
     ultimoTablero = null;//Auxiliar con el ultimo tablero usado
     qRate = 0.2;
     N;
@@ -20,7 +20,7 @@ export default class RLAgent{
     resetearTablero(){
         this.ultimoTablero.resetearTablero();
         this.tablero.resetearTablero();
-        this.resultadoDelJuego = JUEGO_NO_INICIADO;
+        this.resultadoDelJuego = 0;
     }
     calcularReward( tablero, jugador){
         const contrario = (jugador % 2) + 1;
@@ -52,13 +52,15 @@ export default class RLAgent{
         this.lookupTable[serialTablero] = prob;
     }
     jugar(){//jugador= 1 | 2
-        //ELITISTA?
         let jugadaARealizar;
         let prob, maxProb = -1;
         const jugadas = this.tablero.getAllJugadas(this.jugador);
         if( !jugadas.length ){
-            this.resultadoDelJuego = EMPATE;
+            this.resultadoDelJuego = 3;
             return false;
+        }
+        if(this.estaEntrenando && Math.random() > this.qRate){
+            return this.jugarRandom(this.jugador, true);
         }
         for (const jugada of jugadas) {//recorrer las jugadas posibles
             const copiaTablero = this.tablero.clonarTablero();
@@ -94,65 +96,76 @@ export default class RLAgent{
         }
         return true;
     }
-    entrenarVsRandom(){
-        for (let i = 0; i < this.N; i++) {
+    entrenar(minimaxAgent){
+        //ENTRENA n/2 veces con random y n/2 veces con Minimax
+        this.entrenarVsRandom( this.N / 2 );
+        this.alpha = 0.6;
+        this.qRate = 0.3;
+        this.entrenarVsMinimax( this.jugador, this.N / 2, minimaxAgent );
+        this.qRate = 0.2;
+    }
+    entrenarVsRandom(n){
+        for (let i = 0; i < n; i++) {
             this.resetearTablero();
             this.actualizarAlpha(i);
             this.jugarVsRandom(this.jugador);
-            console.log('Entrenando...');
+            console.log('Entrenando vs Random...');
         }
         this.resetearTablero();
-        //this.actualizarAlpha(0.6);
-        console.log(JSON.parse(JSON.stringify(this.lookupTable)));
     }
-    expectarPartidaVsRandom(jugador, esAgente){
-        let haJugado = false;
-        const q = Math.random();
-        if(esAgente){
-            if( q <= this.qRate || !this.estaEntrenando){
-                haJugado = this.jugar(jugador); console.log('Agente ha jugado inteligente');
-            }else{
-                haJugado = this.jugarRandom(jugador, true); console.log('Agente ha jugado random');
-            }
-        }else{
-            haJugado = this.jugarRandom(jugador, false);
+    entrenarVsMinimax( jugador, n , minimaxAgent ){
+        const contrario = jugador % 2 + 1;
+        console.log('entrenarVsMinimax')
+        if(!minimaxAgent){
+            minimaxAgent = new MinimaxPodaAlfaBeta(contrario, 1, this.tablero)
         }
-        if(!haJugado){
-            this.resultadoDelJuego = EMPATE;
-        }else{
-            this.resultadoDelJuego = this.tablero.calcularResultadoInt();
+        for (let i = 0; i < n; i++) {
+            this.resetearTablero();
+            this.jugarVsMinimax(jugador, minimaxAgent);
+            console.log('Entrenando vs Minimax...');
         }
-        if(this.resultadoDelJuego !== 0){
-            console.log('Ha Terminado!! ' + this.resultadoDelJuego);
-            //this.tablero.dibujarTablero();
-            if( !this.tablero.jugadorEsGanador(jugador) && this.estaEntrenando){//perdimos, actualizar tablero
-                this.actualizarProbabilidad( this.ultimoTablero, this.calcularReward(this.tablero, jugador), jugador );
-            }
-        }
+        this.resetearTablero();
     }
-    jugarVsRandom(jugador = 1){
-        //Jugadas promedio de una partida = 49
-        //https://boardgames.stackexchange.com/questions/34659/how-many-turns-does-an-average-game-of-checkers-draughts-go-for
-        const contrario = (jugador % 2) + 1;
+    jugarVsMinimax(jugador = 1, minimaxAgent){
         let turno = 1;
-        let jugadas = 49;
-        let q = 0;
+        let jugadas = 60;
         do{
             let haJugado = false;
             if(turno === jugador){
-                q = Math.random();
-                if( q <= this.qRate || !this.estaEntrenando){
-                    haJugado = this.jugar(jugador); 
-                    //console.log('Agente ha jugado inteligente');
-                }else{
-                    haJugado = this.jugarRandom(jugador, true); 
-                    //console.log('Agente ha jugado random');
+                haJugado = this.jugar(jugador);
+            }else{
+                haJugado = true;
+                minimaxAgent.jugar();
+            }
+            if(!haJugado){
+                this.resultadoDelJuego = 3;
+            }else{
+                this.resultadoDelJuego = this.tablero.calcularResultadoInt();
+            }
+            if(this.resultadoDelJuego !== 0){
+                if( !this.tablero.jugadorEsGanador(jugador) && this.estaEntrenando){//perdimos, actualizar tablero
+                    this.actualizarProbabilidad( this.ultimoTablero, this.calcularReward(this.tablero, jugador), jugador );
                 }
+                break;
+            }
+            turno = (turno % 2) + 1;
+            jugadas--;
+        }while( jugadas > 0)
+    }
+    jugarVsRandom(jugador = 1){
+        
+        const contrario = (jugador % 2) + 1;
+        let turno = 1;
+        let jugadas = 60;
+        do{
+            let haJugado = false;
+            if(turno === jugador){
+                haJugado = this.jugar(jugador); 
             }else{
                 haJugado = this.jugarRandom(contrario, false);
             }
             if(!haJugado){
-                this.resultadoDelJuego = EMPATE;
+                this.resultadoDelJuego = 3;
             }else{
                 this.resultadoDelJuego = this.tablero.calcularResultadoInt();
             }
