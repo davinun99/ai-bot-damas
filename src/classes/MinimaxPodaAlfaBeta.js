@@ -90,7 +90,7 @@ class MinimaxPodaAlfaBeta {
             const tableroSimulado = new Tablero(tableroActual.clonarTablero());
             tableroSimulado.jugar(movimiento);
             let rewardMovimiento = this.minValue(tableroSimulado,profundidadMax-1,this.alfa,this.beta); //simulamos la jugada para obtener el reward a partir de cada mov
-            console.log('rewards posibles; '+rewardMovimiento);
+            //console.log('rewards posibles; '+rewardMovimiento);
             if (rewardMovimiento === rewardMax) { //si el reward del movimiento es igual al reward máximo cargamos en la lista de mejores movimientos
                 mejorMovElegido = movimiento;
                 listaMejoresMovimientos.push(movimiento);
@@ -200,27 +200,36 @@ class MinimaxPodaAlfaBeta {
             } else { //si el jugador es negro
                 reward = this.rewardPiezasNegras(tableroActual); //cantidad de negras
             }
-            // var rewardPosJugador = 0;
-            // for (let posicion of tableroActual.getFichas(this.jugador)) { //calcular recompensa de cada posición
-            //     rewardPosJugador += this.rewardPosicion(posicion);
-            // }
-            // var rewardPosRival = 0;
-            // for (let posicion of tableroActual.getFichas(this.rival)) { //restamos la recompensa de cada posición del rival
-            //     rewardPosRival+= this.rewardPosicion(posicion);
-            // }
-            // //sacamos un promedio de puntajes de las posiciones y las restamos entre sí
-            // if (this.jugador == 2) { //si el jugador es blancas
-            //     reward += (rewardPosJugador/tableroActual.cantFichasBlancas)-(rewardPosRival/tableroActual.cantFichasNegras);
-            // }else{ //si el jugador es negras
-            //     reward += (rewardPosJugador/tableroActual.cantFichasNegras)-(rewardPosRival/tableroActual.cantFichasBlancas);
-            // }
-            //reward += this.rewardPosBordes() +this.rewardCubrirAliado() +this.soplo();
+            //calcular recompensa de las posiciones: dar prioridad a las cercanas a los bordes
+            var rewardPosJugador = 0;
+            for (let posicion of tableroActual.getFichas(this.jugador)) { 
+                rewardPosJugador += this.rewardPosicion(posicion) + this.rewardPosVecinos(posicion,tableroActual);
+            }
+            var rewardPosRival = 0;
+            for (let posicion of tableroActual.getFichas(this.rival)) { //restamos la recompensa de cada posición del rival
+                rewardPosRival+= this.rewardPosicion(posicion) + this.rewardPosVecinos(posicion,tableroActual);
+            }
+            //validamos que no se divida entre 0
+            let cantidadBlancas = tableroActual.cantFichasBlancas;
+            if (tableroActual.cantFichasBlancas === 0){
+                cantidadBlancas = 0.000001;
+            }
+            let cantidadNegras = tableroActual.cantFichasNegras;
+            if (tableroActual.cantFichasNegras === 0){
+                cantidadNegras = 0.000001;
+            }
+            //sacamos un promedio de puntajes de las posiciones y las restamos entre sí
+            if (this.jugador == 2) { //si el jugador es blancas
+                reward += (rewardPosJugador/cantidadBlancas)-(rewardPosRival/cantidadNegras);
+            }else{ //si el jugador es negras
+                reward += (rewardPosJugador/cantidadNegras)-(rewardPosRival/cantidadBlancas);
+            }
+            // reward += this.rewardPosBordes()[check] +this.rewardCubrirAliado() +this.soplo();
         }
         return reward;
     }
 
     //subrutinas reward
-        //asignaremos el mismo valor a comer que a coronar
     rewardPiezasBlancas(tableroActual){
         return 100*(tableroActual.cantPeonesBlancos - tableroActual.cantPeonesNegros) +
         10*(tableroActual.cantDamasBlancas-tableroActual.cantDamasNegras);
@@ -230,15 +239,30 @@ class MinimaxPodaAlfaBeta {
         return 100*(tableroActual.cantPeonesNegros - tableroActual.cantPeonesBlancos) +
         10*(tableroActual.cantDamasNegras-tableroActual.cantDamasBlancas);
     }
-    
-    // rewardPosicion(x , y) {
-    //     if (x == 0 || x == 7 || y == 0 || y == 7){
-    //         return 5;
-    //     }
-    //     else {
-    //         return 3;
-    //     }
-    // }
+
+    //subrutina reward por estar en los costados
+    rewardPosicion(x , y) {
+        if (x == 0 || x == 7 || y == 0 || y == 7){ 
+            return 5;
+        }
+        else {
+            return 2;
+        }
+    }
+
+    rewardPosVecinos([posX,posY],tableroActual){ //verificaremos si se tiene vecinos cerca
+        let reward = 0;
+        for (let x = posX-1; x <= posX+1; x+=2) {
+            for (let y = posY-1; y <= posY+1; y+=2) {
+                if (x>=0 && x<=7 && y>=0 && y<=7) { //if para saber si las posiciones son válidas
+                    if( tableroActual.table[x][y] === this.jugador || tableroActual.table[x][y] === this.jugador + 7 ){
+                        reward+=1; //por cada ficha aliada al lado del jugador sumamos 1;
+                    }
+                }
+            }   
+        }
+        return reward;
+    }
 
     //funciones extra
     max(a,b){
