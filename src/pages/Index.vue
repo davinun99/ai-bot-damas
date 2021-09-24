@@ -4,7 +4,7 @@
     <!-- HEADER -->
 
     <div class="row q-my-md">
-      <q-btn-dropdown color="primary" :label="blancasJueganCon">
+      <q-btn-dropdown color="primary" :label="'BLNCAS: ' + blancasJueganCon">
         <q-input class="q-ma-md" v-model="blancaN" label="N" />
         <q-separator />
         <q-list>
@@ -18,7 +18,7 @@
 
       <div class="q-ma-md text-grey-8">VS.</div>
 
-      <q-btn-dropdown color="primary" :label="negrasJueganCon">
+      <q-btn-dropdown color="primary" :label="'NEGRAS: ' + negrasJueganCon">
         <q-input class="q-ma-md" v-model="negraN" label="N" />
         <q-separator />
         <q-list>
@@ -32,14 +32,42 @@
 
       <div class="q-ma-md text-grey-8">|</div>
 
-      <q-btn v-if="!started" color="primary" @click="empezarPartida">
-        <div class="q-mr-md">Empezar</div>
-        <q-icon name="arrow_forward"></q-icon>
-      </q-btn>
+      <div v-if="!started && !simulando" class="column">
+        <q-btn color="primary" @click="empezarPartida">
+          <div class="q-mr-md">Empezar</div>
+          <q-icon name="arrow_forward"></q-icon>
+        </q-btn>
+        <q-btn color="primary" @click="simularPartida">
+          <div class="q-mr-md">Simular</div>
+          <q-icon name="arrow_forward"></q-icon>
+        </q-btn>
+      </div>
       <q-btn v-else color="negative" @click="terminarPartida">
         <div class="q-mr-md">Terminar</div>
         <q-icon name="close"></q-icon>
       </q-btn>
+    </div>
+
+    <!-- TABLA DE SIMULACIÓN -->
+
+    <div class="column" v-if="rows">
+
+      <q-table
+        title="Juegos"
+        :rows="rows"
+        :columns="columns"
+        row-key="name"
+      />
+
+      <q-table
+        style="margin-top:20px"
+        v-if="resumeRows"
+        title="Remunen"
+        :rows="resumeRows"
+        :columns="resumeColumns"
+        row-key="name"
+      />
+
     </div>
 
     <!-- TABLE -->
@@ -81,10 +109,35 @@ const blancaJuegos = ['Humano', 'Aprendizaje Reforzado', 'Minimax', 'Minimax con
 const negraJuegos = ['Aprendizaje Reforzado', 'Minimax', 'Minimax con poda alfa-beta'];
 
 import RLAgent from 'src/classes/RLAgent.js';
+import Simulacion from 'src/classes/Simulacion.js';
+
+const resumeColumns = [
+  { name: 'jugador', label: 'Jugador', align: 'left', field: row => row.jugador, sortable: true },
+  { name: 'ganadas', label: 'Ganadas', align: 'left', field: row => row.ganadas, sortable: true },
+  { name: 'perdidas', label: 'Perdidas', align: 'left', field: row => row.perdidas, sortable: true },
+  { name: 'empates', label: 'Empates', align: 'left', field: row => row.empates, sortable: true },
+  { name: 'inconclusos', label: 'Inconclusos', align: 'left', field: row => row.inconclusos, sortable: true },
+];
+
+const columns = [
+  { name: 'n', label: 'N°', align: 'left', field: row => row.n, sortable: true },
+  { name: 'winner', label: 'Ganador', align: 'left', field: row => row.mensaje, sortable: true },
+  { name: 't1', label: 'Tiempo de las blancas', align: 'left', field: row => row.jugador1.tiempo, sortable: true },
+  { name: 't2', label: 'Tiempo de las negras', align: 'left', field: row => row.jugador2.tiempo, sortable: true },
+  { name: 'e1', label: 'Nodos expandidaso (blancas)', align: 'left', field: row => row.jugador1.expansion, sortable: true },
+  { name: 'e2', label: 'Nodos expandidaso (negras)', align: 'left', field: row => row.jugador2.expansion, sortable: true },
+];
+
 export default {
   name: 'Index',
   data() {
     return {
+      resumeColumns,
+      columns,
+      rows: null,
+      resumeRows: null,
+
+      simulando: false,
       started: false,
       jugadorActual: 2,
       interactive: true,
@@ -110,6 +163,29 @@ export default {
     }
   },
   methods: {
+    simularPartida() {
+      this.simulando = true;
+      const cantPartidas = parseInt(prompt("Cantidad de simulaciones:"));
+      const jugador1 = { p1: this.jugadorBlanco === blancaJuegos[1] ? 'rl' : this.jugadorBlanco === blancaJuegos[3] ? 'poda' : '', n1: this.blancaN };
+      const jugador2 = { p2: this.jugadorNegro === negraJuegos[0] ? 'rl' : this.jugadorNegro === negraJuegos[2] ? 'poda' : '', n2: this.negraN };
+      this.rows = new Simulacion(cantPartidas, jugador1, jugador2).iniciarSimulacion();
+      
+      this.resumeRows = [{
+        jugador: 'Blancas',
+        ganadas: this.rows.filter(r => r.n === 2).length,
+        perdidas: this.rows.filter(r => r.n === 1).length,
+        empates: this.rows.filter(r => r.n === 3).length,
+        inconclusos: this.rows.filter(r => r.n === 0).length,
+      }, {
+        jugador: 'Negas',
+        ganadas: this.rows.filter(r => r.n === 1).length,
+        perdidas: this.rows.filter(r => r.n === 2).length,
+        empates: this.rows.filter(r => r.n === 3).length,
+        inconclusos: this.rows.filter(r => r.n === 0).length,
+      }];
+      console.log('this.resumeRows:', this.resumeRows);
+      console.log('partidas:', this.rows);
+    },
     empezarPartida() {
       //
       // Inicializar piezas negras
@@ -163,8 +239,10 @@ export default {
       }, 500);
     },
     terminarPartida() {
+      this.rows = null;
       this.tablero.resetearTablero();
       this.started = false;
+      this.simulando = false;
     },
     jugarCon(jugador, juego) {
       if (jugador === 1) this.negrasJueganCon = juego; 

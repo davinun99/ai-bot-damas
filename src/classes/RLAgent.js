@@ -16,8 +16,10 @@ export default class RLAgent{
         this.lookupTable = {};
         this.tablero = tablero;
         this.ultimoTablero = tablero;
+        this.nodosExpandidos = 0;
     }
-    resetearTablero(){
+    resetearTablero() {
+        this.nodosExpandidos = 0;
         this.ultimoTablero.resetearTablero();
         this.tablero.resetearTablero();
         this.resultadoDelJuego = 0;
@@ -63,6 +65,7 @@ export default class RLAgent{
             return this.jugarRandom(this.jugador, true);
         }
         for (const jugada of jugadas) {//recorrer las jugadas posibles
+            this.nodosExpandidos++;
             const copiaTablero = this.tablero.clonarTablero();
             this.tablero.jugar(jugada);
             prob = this.calcularReward(this.tablero, this.jugador);

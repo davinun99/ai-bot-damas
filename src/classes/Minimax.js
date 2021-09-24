@@ -14,9 +14,11 @@ class Minimax {
         this.rival = (this.jugador % 2) + 1;
         this.tableroActual = tablero;
         this.profundidadMax = N || 1;
+        this.nodosExpandidos = 0;
+        
     }
     jugar( ){
-        console.log('rurno de minimax');
+        // console.log('rurno de minimax');
         //console.log('Tablero',this.tableroActual);
         if (this.tableroActual.getAllJugadas(this.rival).length === 0) { //si el rival ya no tiene movimientos posibles pierde
             console.log("el rival ha perdido");
@@ -65,6 +67,7 @@ class Minimax {
     }
 
     decisionMinimaxAlfaBeta(tableroActual,profundidadMax){ //función que llama a las funciones minimax y elige el siguiente movimiento
+        this.nodosExpandidos++;
         //primero obtenemos el mejor reward
         let rewardMax = this.alfa;
         //rewardMax = this.maxValue(tableroActual,profundidadMax,this.alfa,this.beta);
@@ -123,6 +126,7 @@ class Minimax {
 
     //funciones minimax
     maxValue(tableroActual,profundidadMax,alfa,beta){ //función max de minimax
+        this.nodosExpandidos++;
         let max = this.alfa;
         //tablero que simulará la jugada y la pasará al siguiente elemento
         if (profundidadMax <=0 || tableroActual.calcularResultado() !== JUEGO_INCONCLUSO){
@@ -150,6 +154,7 @@ class Minimax {
 
 
     minValue(tableroActual,profundidadMax,alfa,beta){ //función min de minimax
+        this.nodosExpandidos++;
         let min = this.beta;
         if (profundidadMax <=0  || tableroActual.calcularResultado() !== JUEGO_INCONCLUSO){ //cutOff Test
             return this.rewardJugada(tableroActual);
