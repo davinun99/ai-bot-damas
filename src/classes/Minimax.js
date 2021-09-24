@@ -16,11 +16,12 @@ class Minimax {
         this.profundidadMax = N || 1;
     }
     jugar( ){
-        console.log('Tablero',this.tableroActual);
+        console.log('rurno de minimax');
+        //console.log('Tablero',this.tableroActual);
         if (this.tableroActual.getAllJugadas(this.rival).length === 0) { //si el rival ya no tiene movimientos posibles pierde
             console.log("el rival ha perdido");
         } else if(this.tableroActual.getAllJugadas(this.jugador).length === 0){ //si el jugador ya no tiene movimientos posibles pierde
-            console.log("minimax con poda ha perdido");
+            console.log("minimax ha perdido");
         }else{
             let movimientoElegido = this.decisionMinimaxAlfaBeta(this.tableroActual,this.profundidadMax);
             let {movimiento, puedeCapturar, fichasCapturadas, ficha} = movimientoElegido; //desarmamos el movimiento
@@ -38,7 +39,7 @@ class Minimax {
                 console.log("el rival ha perdido");
                 break;
             } else if(this.tableroActual.getAllJugadas(this.jugador).length === 0){ //si el jugador ya no tiene movimientos posibles pierde
-                console.log("minimax con poda ha perdido");
+                console.log("minimax ha perdido");
                 break;
             }else{
                 this.tableroActual.dibujarTablero();
@@ -90,7 +91,7 @@ class Minimax {
             const tableroSimulado = new Tablero(tableroActual.clonarTablero());
             tableroSimulado.jugar(movimiento);
             let rewardMovimiento = this.minValue(tableroSimulado,profundidadMax-1,this.alfa,this.beta); //simulamos la jugada para obtener el reward a partir de cada mov
-            console.log('rewards posibles; '+rewardMovimiento);
+            //console.log('rewards posibles; '+rewardMovimiento);
             if (rewardMovimiento === rewardMax) { //si el reward del movimiento es igual al reward máximo cargamos en la lista de mejores movimientos
                 mejorMovElegido = movimiento;
                 listaMejoresMovimientos.push(movimiento);

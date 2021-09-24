@@ -5,8 +5,8 @@ class MinimaxPodaAlfaBeta {
     alfa = -100000; 
     beta = 100000;
     profundidadMax = 1; //cantidad de niveles del árbol que como máximo bajará
-    jugador = 1; //asumo que jugador es blancas (2)
-    rival = 2; //asumo que es negras (1) el rival
+    jugador = 2; //asumo que jugador es blancas (2)
+    rival = 1; //asumo que es negras (1) el rival
     //movimientoElegido = {};
 
     constructor( jugador = 1, N, tablero ){
@@ -16,7 +16,8 @@ class MinimaxPodaAlfaBeta {
         this.profundidadMax = N || 1;
     }
     jugar( ){
-        console.log('Tablero',this.tableroActual);
+        console.log('turno de minimax con poda alfabeta');
+        //console.log('Tablero',this.tableroActual);
         if (this.tableroActual.getAllJugadas(this.rival).length === 0) { //si el rival ya no tiene movimientos posibles pierde
             console.log("el rival ha perdido");
         } else if(this.tableroActual.getAllJugadas(this.jugador).length === 0){ //si el jugador ya no tiene movimientos posibles pierde
@@ -231,13 +232,13 @@ class MinimaxPodaAlfaBeta {
 
     //subrutinas reward
     rewardPiezasBlancas(tableroActual){
-        return 100*(tableroActual.cantPeonesBlancos - tableroActual.cantPeonesNegros) +
-        10*(tableroActual.cantDamasBlancas-tableroActual.cantDamasNegras);
+        return 110*(tableroActual.cantPeonesBlancos - tableroActual.cantPeonesNegros) +
+        45*(tableroActual.cantDamasBlancas-tableroActual.cantDamasNegras);
     }
 
     rewardPiezasNegras(tableroActual){
-        return 100*(tableroActual.cantPeonesNegros - tableroActual.cantPeonesBlancos) +
-        10*(tableroActual.cantDamasNegras-tableroActual.cantDamasBlancas);
+        return 110*(tableroActual.cantPeonesNegros - tableroActual.cantPeonesBlancos) +
+        45*(tableroActual.cantDamasNegras-tableroActual.cantDamasBlancas);
     }
 
     //subrutina reward por estar en los costados
@@ -246,7 +247,7 @@ class MinimaxPodaAlfaBeta {
             return 5;
         }
         else {
-            return 2;
+            return 1.95;
         }
     }
 
@@ -256,7 +257,7 @@ class MinimaxPodaAlfaBeta {
             for (let y = posY-1; y <= posY+1; y+=2) {
                 if (x>=0 && x<=7 && y>=0 && y<=7) { //if para saber si las posiciones son válidas
                     if( tableroActual.table[x][y] === this.jugador || tableroActual.table[x][y] === this.jugador + 7 ){
-                        reward+=1; //por cada ficha aliada al lado del jugador sumamos 1;
+                        reward+=0.5; //por cada ficha aliada al lado del jugador sumamos 1;
                     }
                 }
             }   
