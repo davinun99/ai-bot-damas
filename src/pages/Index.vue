@@ -56,7 +56,7 @@
               :class="[elem === 1 ? 'black-pawn' : 'white-pawn', { 'selected': index === selectedElement[0] && indexElem === selectedElement[1] }]" />
             <q-btn flat v-else-if="elem === 8 || elem === 9" 
               @click="select([index, indexElem], elem !== 8)" class="pawn" 
-              :class="[elem === 8 ? 'black-pawn' : 'white-pawn', { 'selected': index === selectedElement[0] && indexElem === selectedElement[1] }]" />
+              :class="[elem === 8 ? 'black-lady' : 'white-lady', { 'selected': index === selectedElement[0] && indexElem === selectedElement[1] }]" />
             <q-btn flat v-else 
               @click="selectMovement([index, indexElem])" class="pawn" />
           </div>
@@ -258,6 +258,14 @@ export default {
 }
 .white-pawn {
   background-color: white;
+}
+.black-lady {
+  background-color: gold;
+  border: 10px solid black;
+}
+.white-lady {
+  background-color: gold;
+  border: 10px solid white;
 }
 .selected {
   background-color: #999;
