@@ -1,22 +1,24 @@
-# Quasar App (ai_tarea2)
+# IA: Tarea 2
 
-A Quasar Framework app
+## Grupo 6
+* Luis Meza
+* Matias López
+* David Nuñez
+* Walter Gauto
 
-## Install the dependencies
+## Instrucciones
+
+### Instalar el cliente de Quasar
+```bash
+npm install -g @quasar/cli
+```
+
+### Instalar las dependencias
 ```bash
 npm install
 ```
 
-### Start the app in development mode (hot-code reloading, error reporting, etc.)
+### Ejecutar el servidor
 ```bash
 quasar dev
 ```
-
-
-### Build the app for production
-```bash
-quasar build
-```
-
-### Customize the configuration
-See [Configuring quasar.conf.js](https://v2.quasar.dev/quasar-cli/quasar-conf-js).
